@@ -20,16 +20,16 @@
 
 | 统一字段 | 类型 | 必填 | 上游映射 | 说明 |
 | --- | --- | --- | --- | --- |
-| `model` | string | 是 | `model` | 视频模型 ID。 |
-| `prompt` | string | 是 | `prompt/content/input` | 视频提示词。 |
-| `images` | media[] | 否 | `first/last/reference image` | 显式 role 图片输入。 |
-| `videos` | media[] | 否 | `reference video` | 参考视频。 |
-| `audios` | media[] | 否 | `reference audio/voice` | 参考音频或音色。 |
-| `duration` | integer | 否 | `duration/seconds` | 时长秒数。 |
-| `aspectRatio` | string | 否 | `ratio/aspect_ratio/size` | 画幅比例或尺寸。 |
-| `resolution` | string | 否 | `resolution` | 分辨率档位。 |
-| `generateAudio` | boolean | 否 | `generate_audio` | 是否生成音频。 |
-| `watermark` | boolean | 否 | `watermark` | 水印开关。 |
+| `model` | string | 是 | `model` | 上游模型 ID，按影策当前选用的模型发送，不写死网关示例名。 |
+| `prompt` | string | 是 | `prompt` | 视频生成提示词。 |
+| `images` | media[] | 否 | `images` | 参考图 URL 数组。这是小力孩网关识别的多图字段；同时兼容 image_urls，第一张也会写入 image。 |
+| `videos` | media[] | 否 | `videos` | 参考视频 URL 数组。 |
+| `audios` | media[] | 否 | `audios` | 参考音频 URL 数组。 |
+| `duration` | integer | 否 | `seconds` | 时长秒数，发送为 seconds 字符串。 |
+| `aspectRatio` | string | 否 | `aspect_ratio / ratio` | 画幅比例，同时发送 aspect_ratio 与 ratio。 |
+| `resolution` | string | 否 | `resolution` | 可选分辨率档位。 |
+| `generateAudio` | boolean | 否 | `generate_audio` | 可选，是否同时生成音频。 |
+| `watermark` | boolean | 否 | `unsupported` | 当前不发送水印字段。 |
 | `providerOptions` | object | 否 | `provider-specific fields` | 插件命名空间内的厂商扩展字段。 |
 
 ## 上游请求模板逐字段清单
@@ -45,14 +45,18 @@
 | `create.body.prompt` | `{"$ref":"request.prompt"}` |
 | `create.body.seconds` | `{"$toString":{"$ref":"request.duration"}}` |
 | `create.body.aspect_ratio` | `{"$coalesce":[{"$ref":"request.aspectRatio"},"16:9"]}` |
+| `create.body.ratio` | `{"$coalesce":[{"$ref":"request.aspectRatio"},"16:9"]}` |
 | `create.body.resolution` | `{"$omitEmpty":{"$ref":"request.resolution"}}` |
 | `create.body.generate_audio` | `{"$ref":"request.generateAudio"}` |
+| `create.body.images` | `{"$omitEmpty":{"$map":{"from":{"$sortByOrder":{"$ref":"request.images"}},"as":"media","in":{"$ref":"media.value"}}}}` |
+| `create.body.image` | `{"$omitEmpty":{"$first":{"$map":{"from":{"$sortByOrder":{"$ref":"request.images"}},"as":"media","in":{"$ref":"media.value"}}}}}` |
 | `create.body.image_urls` | `{"$omitEmpty":{"$map":{"from":{"$sortByOrder":{"$ref":"request.images"}},"as":"media","in":{"$ref":"media.value"}}}}` |
+| `create.body.videos` | `{"$omitEmpty":{"$map":{"from":{"$sortByOrder":{"$ref":"request.videos"}},"as":"media","in":{"$ref":"media.value"}}}}` |
+| `create.body.audios` | `{"$omitEmpty":{"$map":{"from":{"$sortByOrder":{"$ref":"request.audios"}},"as":"media","in":{"$ref":"media.value"}}}}` |
 | `create.body.video_urls` | `{"$omitEmpty":{"$map":{"from":{"$sortByOrder":{"$ref":"request.videos"}},"as":"media","in":{"$ref":"media.value"}}}}` |
 | `create.body.audio_urls` | `{"$omitEmpty":{"$map":{"from":{"$sortByOrder":{"$ref":"request.audios"}},"as":"media","in":{"$ref":"media.value"}}}}` |
 | `poll.method` | `"GET"` |
 | `poll.path` | `"/v1/video/tasks/{{taskId}}"` |
-| `poll.contentType` | `"application/json"` |
 
 ## Provider 扩展键
 
@@ -66,7 +70,7 @@
 | --- | --- |
 | `response.taskId` | `{"$coalesce":[{"$ref":"response.data.task_id"},{"$ref":"response.data.taskId"},{"$ref":"response.task_id"},{"$ref":"response.taskId"},{"$ref":"response.data.id"},{"$ref":"response.id"},{"$ref":"taskId"}]}` |
 | `response.status` | `{"$coalesce":[{"$ref":"response.status"},{"$ref":"response.state"},{"$ref":"response.data.status"},"pending"]}` |
-| `response.message` | `{"$coalesce":[{"$ref":"response.error.message"},{"$ref":"response.message"},{"$ref":"response.fail_reason"},{"$ref":"response.data.fail_reason"},{"$ref":"response.data.error.message"}]}` |
+| `response.message` | `{"$coalesce":[{"$coalesce":[{"$ref":"response.error.message"},{"$ref":"response.message"},{"$ref":"response.fail_reason"},{"$ref":"response.data.fail_reason"},{"$ref":"response.data.error.message"}]},{"$ref":"response.error"}]}` |
 | `response.videos` | `{"$coalesce":[{"$map":{"from":{"$ref":"response.data"},"as":"item","in":{"$coalesce":[{"$ref":"item.url"},{"$ref":"item.video_url"},{"$ref":"item.videoUrl"},{"$ref":"item.output_url"},{"$ref":"item.outputUrl"}]}}},{"$ref":"response.data.result_url"},{"$ref":"response.data.video_url"},{"$ref":"response.data.output_url"},{"$ref":"response.data.url"},{"$ref":"response.data.metadata.url"},{"$ref":"response.data.data.video_url"},{"$ref":"response.data.data.output_url"},{"$ref":"response.data.data.result_url"},{"$ref":"response.data.data.url"},{"$ref":"response.data.data.metadata.url"},{"$ref":"response.video_url"},{"$ref":"response.videoUrl"},{"$ref":"response.result_url"},{"$ref":"response.output_url"},{"$ref":"response.url"},{"$ref":"response.metadata.url"},{"$ref":"response.output.url"}]}` |
 | `response.errorPaths[0]` | `"error.code"` |
 | `response.resultEphemeral` | `true` |
@@ -77,7 +81,7 @@
 
 ## 兼容边界
 
-该协议创建路径与 NewAPI Video Generations Channel 2 相同（POST /v1/video/generations），但查询走 GET /v1/video/tasks/{taskId}，适用于小力孩等使用该查询路径的网关。不能与 newapi-channel-2 混用，也不能根据模型名猜测。
+该协议创建路径与 NewAPI Video Generations Channel 2 相同（POST /v1/video/generations），但查询走 GET /v1/video/tasks/{taskId}，适用于小力孩等使用该查询路径的网关。创建体按钱柜可用的参数表发送多图字段 images（URL 数组），同时发送 aspect_ratio 与 ratio、seconds，以及有素材时的 videos/audios。不能与 newapi-channel-2 混用，也不能根据模型名猜测。
 
 <!-- YINGCE_MANIFEST_CONTRACT_START -->
 ## Manifest 完整接口定义
@@ -134,70 +138,70 @@
             "type": "string",
             "required": true,
             "mapping": "model",
-            "description": "视频模型 ID。"
+            "description": "上游模型 ID，按影策当前选用的模型发送，不写死网关示例名。"
           },
           {
             "name": "prompt",
             "type": "string",
             "required": true,
-            "mapping": "prompt/content/input",
-            "description": "视频提示词。"
+            "mapping": "prompt",
+            "description": "视频生成提示词。"
           },
           {
             "name": "images",
             "type": "media[]",
             "required": false,
-            "mapping": "first/last/reference image",
-            "description": "显式 role 图片输入。"
+            "mapping": "images",
+            "description": "参考图 URL 数组。这是小力孩网关识别的多图字段；同时兼容 image_urls，第一张也会写入 image。"
           },
           {
             "name": "videos",
             "type": "media[]",
             "required": false,
-            "mapping": "reference video",
-            "description": "参考视频。"
+            "mapping": "videos",
+            "description": "参考视频 URL 数组。"
           },
           {
             "name": "audios",
             "type": "media[]",
             "required": false,
-            "mapping": "reference audio/voice",
-            "description": "参考音频或音色。"
+            "mapping": "audios",
+            "description": "参考音频 URL 数组。"
           },
           {
             "name": "duration",
             "type": "integer",
             "required": false,
-            "mapping": "duration/seconds",
-            "description": "时长秒数。"
+            "mapping": "seconds",
+            "description": "时长秒数，发送为 seconds 字符串。"
           },
           {
             "name": "aspectRatio",
             "type": "string",
             "required": false,
-            "mapping": "ratio/aspect_ratio/size",
-            "description": "画幅比例或尺寸。"
+            "mapping": "aspect_ratio / ratio",
+            "description": "画幅比例，同时发送 aspect_ratio 与 ratio。"
           },
           {
             "name": "resolution",
             "type": "string",
             "required": false,
             "mapping": "resolution",
-            "description": "分辨率档位。"
+            "description": "可选分辨率档位。"
           },
           {
             "name": "generateAudio",
             "type": "boolean",
             "required": false,
             "mapping": "generate_audio",
-            "description": "是否生成音频。"
+            "description": "可选，是否同时生成音频。"
           },
           {
             "name": "watermark",
             "type": "boolean",
             "required": false,
-            "mapping": "watermark",
-            "description": "水印开关。"
+            "mapping": "unsupported",
+            "description": "当前不发送水印字段。"
           },
           {
             "name": "providerOptions",
@@ -231,6 +235,14 @@
                 "16:9"
               ]
             },
+            "ratio": {
+              "$coalesce": [
+                {
+                  "$ref": "request.aspectRatio"
+                },
+                "16:9"
+              ]
+            },
             "resolution": {
               "$omitEmpty": {
                 "$ref": "request.resolution"
@@ -239,12 +251,74 @@
             "generate_audio": {
               "$ref": "request.generateAudio"
             },
+            "images": {
+              "$omitEmpty": {
+                "$map": {
+                  "from": {
+                    "$sortByOrder": {
+                      "$ref": "request.images"
+                    }
+                  },
+                  "as": "media",
+                  "in": {
+                    "$ref": "media.value"
+                  }
+                }
+              }
+            },
+            "image": {
+              "$omitEmpty": {
+                "$first": {
+                  "$map": {
+                    "from": {
+                      "$sortByOrder": {
+                        "$ref": "request.images"
+                      }
+                    },
+                    "as": "media",
+                    "in": {
+                      "$ref": "media.value"
+                    }
+                  }
+                }
+              }
+            },
             "image_urls": {
               "$omitEmpty": {
                 "$map": {
                   "from": {
                     "$sortByOrder": {
                       "$ref": "request.images"
+                    }
+                  },
+                  "as": "media",
+                  "in": {
+                    "$ref": "media.value"
+                  }
+                }
+              }
+            },
+            "videos": {
+              "$omitEmpty": {
+                "$map": {
+                  "from": {
+                    "$sortByOrder": {
+                      "$ref": "request.videos"
+                    }
+                  },
+                  "as": "media",
+                  "in": {
+                    "$ref": "media.value"
+                  }
+                }
+              }
+            },
+            "audios": {
+              "$omitEmpty": {
+                "$map": {
+                  "from": {
+                    "$sortByOrder": {
+                      "$ref": "request.audios"
                     }
                   },
                   "as": "media",
@@ -333,19 +407,26 @@
           "message": {
             "$coalesce": [
               {
-                "$ref": "response.error.message"
+                "$coalesce": [
+                  {
+                    "$ref": "response.error.message"
+                  },
+                  {
+                    "$ref": "response.message"
+                  },
+                  {
+                    "$ref": "response.fail_reason"
+                  },
+                  {
+                    "$ref": "response.data.fail_reason"
+                  },
+                  {
+                    "$ref": "response.data.error.message"
+                  }
+                ]
               },
               {
-                "$ref": "response.message"
-              },
-              {
-                "$ref": "response.fail_reason"
-              },
-              {
-                "$ref": "response.data.fail_reason"
-              },
-              {
-                "$ref": "response.data.error.message"
+                "$ref": "response.error"
               }
             ]
           },

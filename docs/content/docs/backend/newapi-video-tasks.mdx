@@ -14,7 +14,7 @@ description: 创建走 /v1/video/generations，查询走 /v1/video/tasks 的 New
 - 创建：`POST /v1/video/generations`
 - 查询：`GET /v1/video/tasks/{taskId}`
 
-创建响应的任务 ID 解析顺序与 Channel 2 相同。查询成功状态包括 `succeeded`、`completed` 和 `SUCCESS`，视频地址优先读取 `data` 数组中的 `url`（如 `data.0.url`），并兼容 Channel 2 已支持的嵌套结果字段。
+创建请求按钱柜可用的参数表发送：多图走 `images`（URL 数组），同时带上 `aspect_ratio` 与 `ratio`、`seconds`，有连续性视频或音色参考时再发 `videos`/`audios`。创建响应的任务 ID 解析顺序与 Channel 2 相同。查询成功状态包括 `succeeded`、`completed` 和 `SUCCESS`，失败状态包括 `failed`、`cancelled`、`canceled`、`failure`，进行中包括 `queued`、`in_progress`、`processing`、`pending`、`running`。视频地址优先读取 `data` 数组中的 `url`（如 `data.0.url`），错误信息可读 `error`，并兼容 Channel 2 已支持的嵌套结果字段。
 
 ## 兼容边界
 

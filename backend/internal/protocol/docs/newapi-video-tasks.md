@@ -21,7 +21,7 @@ Content-Type: application/json
 
 {{PARAMETERS}}
 
-实际字段为 `model`、`prompt`、`seconds`、`aspect_ratio`、可选 `resolution`、`generate_audio`、`image_urls`、`video_urls`、`audio_urls`。时长默认 6 秒并发送为字符串，比例默认 `16:9`。水印当前不发送。
+实际字段为 `model`、`prompt`、`seconds`、`aspect_ratio`、`ratio`（与 `aspect_ratio` 同值），以及网关识别的多图字段 `images`（URL 数组）。有参考视频或音频时发送 `videos`、`audios`。同时保留可选别名 `image`（第一张参考图）、`image_urls`、`video_urls`、`audio_urls`，以及可选 `resolution`、`generate_audio`。时长默认 6 秒并发送为字符串，比例默认 `16:9`。水印当前不发送。
 
 ## 完整多模态请求
 
@@ -34,11 +34,14 @@ curl "{channel_base_url}/v1/video/generations" \
     "prompt":"人物参考第一张图，镜头运动参考视频，节奏跟随音频",
     "seconds":"10",
     "aspect_ratio":"9:16",
+    "ratio":"9:16",
     "resolution":"720p",
     "generate_audio":true,
+    "images":["https://example.com/subject.png"],
+    "image":"https://example.com/subject.png",
     "image_urls":["https://example.com/subject.png"],
-    "video_urls":["https://example.com/motion.mp4"],
-    "audio_urls":["https://example.com/beat.mp3"]
+    "videos":["https://example.com/motion.mp4"],
+    "audios":["https://example.com/beat.mp3"]
   }'
 ```
 

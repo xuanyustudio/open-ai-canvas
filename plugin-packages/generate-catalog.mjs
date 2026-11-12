@@ -569,21 +569,41 @@ add({
   })
 });
 
+const newAPIVideoTasksMediaURLs = (path) => omit(map(sorted(ref(path)), "media", ref("media.value")));
+const newAPIVideoTasksParams = [
+  ["model", "string", true, "model", "上游模型 ID，按影策当前选用的模型发送，不写死网关示例名。"],
+  ["prompt", "string", true, "prompt", "视频生成提示词。"],
+  ["images", "media[]", false, "images", "参考图 URL 数组。这是小力孩网关识别的多图字段；同时兼容 image_urls，第一张也会写入 image。"],
+  ["videos", "media[]", false, "videos", "参考视频 URL 数组。"],
+  ["audios", "media[]", false, "audios", "参考音频 URL 数组。"],
+  ["duration", "integer", false, "seconds", "时长秒数，发送为 seconds 字符串。"],
+  ["aspectRatio", "string", false, "aspect_ratio / ratio", "画幅比例，同时发送 aspect_ratio 与 ratio。"],
+  ["resolution", "string", false, "resolution", "可选分辨率档位。"],
+  ["generateAudio", "boolean", false, "generate_audio", "可选，是否同时生成音频。"],
+  ["watermark", "boolean", false, "unsupported", "当前不发送水印字段。"],
+  ["providerOptions", "object", false, "provider-specific fields", "插件命名空间内的厂商扩展字段。"]
+];
+
 add({
   id: "newapi-video-tasks-v1", providerId: "newapi-video-tasks", name: "NewAPI Video Tasks（/v1/video/tasks 查询）", vendor: "NewAPI", capability: "video",
-  baseUrl: "http://127.0.0.1:3000", auth: bearer, params: videoParams, requiresPublicMediaUrls: true,
-  notes: "该协议创建路径与 NewAPI Video Generations Channel 2 相同（POST /v1/video/generations），但查询走 GET /v1/video/tasks/{taskId}，适用于小力孩等使用该查询路径的网关。不能与 newapi-channel-2 混用，也不能根据模型名猜测。",
+  baseUrl: "http://127.0.0.1:3000", auth: bearer, params: newAPIVideoTasksParams, requiresPublicMediaUrls: true,
+  notes: "该协议创建路径与 NewAPI Video Generations Channel 2 相同（POST /v1/video/generations），但查询走 GET /v1/video/tasks/{taskId}，适用于小力孩等使用该查询路径的网关。创建体按钱柜可用的参数表发送多图字段 images（URL 数组），同时发送 aspect_ratio 与 ratio、seconds，以及有素材时的 videos/audios。不能与 newapi-channel-2 混用，也不能根据模型名猜测。",
   create: jsonCreate("/v1/video/generations", {
     model: ref("request.model"), prompt: ref("request.prompt"), seconds: { $toString: ref("request.duration") },
-    aspect_ratio: coalesce(ref("request.aspectRatio"), "16:9"), resolution: omit(ref("request.resolution")), generate_audio: ref("request.generateAudio"),
-    image_urls: omit(map({ $sortByOrder: ref("request.images") }, "media", ref("media.value"))),
-    video_urls: omit(map({ $sortByOrder: ref("request.videos") }, "media", ref("media.value"))),
-    audio_urls: omit(map({ $sortByOrder: ref("request.audios") }, "media", ref("media.value")))
+    aspect_ratio: coalesce(ref("request.aspectRatio"), "16:9"), ratio: coalesce(ref("request.aspectRatio"), "16:9"),
+    resolution: omit(ref("request.resolution")), generate_audio: ref("request.generateAudio"),
+    images: newAPIVideoTasksMediaURLs("request.images"),
+    image: omit(first(map(sorted(ref("request.images")), "media", ref("media.value")))),
+    image_urls: newAPIVideoTasksMediaURLs("request.images"),
+    videos: newAPIVideoTasksMediaURLs("request.videos"),
+    audios: newAPIVideoTasksMediaURLs("request.audios"),
+    video_urls: newAPIVideoTasksMediaURLs("request.videos"),
+    audio_urls: newAPIVideoTasksMediaURLs("request.audios")
   }),
   poll: { method: "GET", path: "/v1/video/tasks/{{taskId}}" },
   response: asyncResponse("video", {
     taskId: coalesce(ref("response.data.task_id"), ref("response.data.taskId"), ref("response.task_id"), ref("response.taskId"), ref("response.data.id"), ref("response.id"), ref("taskId")),
-    message: newAPITaskMessage,
+    message: coalesce(newAPITaskMessage, ref("response.error")),
     videos: coalesce(
       map(ref("response.data"), "item", coalesce(ref("item.url"), ref("item.video_url"), ref("item.videoUrl"), ref("item.output_url"), ref("item.outputUrl"))),
       ref("response.data.result_url"), ref("response.data.video_url"), ref("response.data.output_url"), ref("response.data.url"), ref("response.data.metadata.url"),
