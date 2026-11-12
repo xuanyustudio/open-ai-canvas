@@ -336,6 +336,9 @@ func RegisterUserDataRoutes(r *gin.RouterGroup, svc *service.Service) {
 	}
 	r.GET("/public/resources/:id/file", publicResourceHandler)
 	r.GET("/public/resources/:id/file/:filename", publicResourceHandler)
+	// 网关常用 HEAD 探测签名地址；未注册时会 404，即使签名有效。
+	r.HEAD("/public/resources/:id/file", publicResourceHandler)
+	r.HEAD("/public/resources/:id/file/:filename", publicResourceHandler)
 	r.GET("/assets", func(c *gin.Context) {
 		user, err := currentUser(c, svc)
 		if err != nil {
