@@ -110,7 +110,6 @@ func TestDramaSegmentEditInvalidatesDescendantsAndRejectsLateResult(t *testing.T
 	}
 }
 
-
 func TestParallelVideoEditDoesNotCascadeStaleLaterSegments(t *testing.T) {
 	svc, _ := newDramaTestService(t)
 	settings := DramaSettings{ReviewMode: DramaReviewAuto, MediaMode: DramaMediaAuto, Concurrency: 16, Models: fakeDramaModels, VideoContinuity: DramaContinuityParallel}
