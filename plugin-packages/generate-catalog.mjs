@@ -573,32 +573,24 @@ const newAPIVideoTasksMediaURLs = (path) => omit(map(sorted(ref(path)), "media",
 const newAPIVideoTasksParams = [
   ["model", "string", true, "model", "上游模型 ID，按影策当前选用的模型发送，不写死网关示例名。"],
   ["prompt", "string", true, "prompt", "视频生成提示词。"],
-  ["images", "media[]", false, "images", "参考图 URL 数组。这是小力孩网关识别的多图字段；同时兼容 image_urls，第一张也会写入 image。"],
-  ["videos", "media[]", false, "videos", "参考视频 URL 数组。"],
-  ["audios", "media[]", false, "audios", "参考音频 URL 数组。"],
+  ["images", "media[]", false, "images", "参考图，发送为 data URI（最多 9 张）；空数组不发送。超预算时先压缩。"],
+  ["videos", "media[]", false, "videos", "参考视频，发送为 data URI（最多 3 个）；空则省略。"],
+  ["audios", "media[]", false, "audios", "参考音频，发送为 data URI（最多 3 个）；空则省略。"],
   ["duration", "integer", false, "seconds", "时长秒数，发送为 seconds 字符串。"],
-  ["aspectRatio", "string", false, "aspect_ratio / ratio", "画幅比例，同时发送 aspect_ratio 与 ratio。"],
-  ["resolution", "string", false, "resolution", "可选分辨率档位。"],
-  ["generateAudio", "boolean", false, "generate_audio", "可选，是否同时生成音频。"],
-  ["watermark", "boolean", false, "unsupported", "当前不发送水印字段。"],
+  ["aspectRatio", "string", false, "aspect_ratio / ratio", "画幅比例，同时发送 aspect_ratio 与 ratio，缺省 9:16。"],
   ["providerOptions", "object", false, "provider-specific fields", "插件命名空间内的厂商扩展字段。"]
 ];
 
 add({
   id: "newapi-video-tasks-v1", providerId: "newapi-video-tasks", name: "NewAPI Video Tasks（/v1/video/tasks 查询）", vendor: "NewAPI", capability: "video",
-  baseUrl: "http://127.0.0.1:3000", auth: bearer, params: newAPIVideoTasksParams, requiresPublicMediaUrls: true,
-  notes: "该协议创建路径与 NewAPI Video Generations Channel 2 相同（POST /v1/video/generations），但查询走 GET /v1/video/tasks/{taskId}，适用于小力孩等使用该查询路径的网关。创建体按钱柜可用的参数表发送多图字段 images（URL 数组），同时发送 aspect_ratio 与 ratio、seconds，以及有素材时的 videos/audios。不能与 newapi-channel-2 混用，也不能根据模型名猜测。",
+  baseUrl: "http://127.0.0.1:3000", auth: bearer, params: newAPIVideoTasksParams, requiresPublicMediaUrls: false,
+  notes: "该协议创建路径与 NewAPI Video Generations Channel 2 相同（POST /v1/video/generations），但查询走 GET /v1/video/tasks/{taskId}，适用于小力孩等使用该查询路径的网关。创建体对齐小力孩官方视频适配文档：只发送 model、prompt、aspect_ratio、ratio、seconds，以及非空时的 images/videos/audios；缺省画幅 9:16。参考素材发送为 data URI（宿主会读取本地资源或拉取 URL 后内嵌，超 80MB 原图预算时压缩图片），避免上游无法访问影策公网地址。不能与 newapi-channel-2 混用，也不能根据模型名猜测。",
   create: jsonCreate("/v1/video/generations", {
     model: ref("request.model"), prompt: ref("request.prompt"), seconds: { $toString: ref("request.duration") },
-    aspect_ratio: coalesce(ref("request.aspectRatio"), "16:9"), ratio: coalesce(ref("request.aspectRatio"), "16:9"),
-    resolution: omit(ref("request.resolution")), generate_audio: ref("request.generateAudio"),
+    aspect_ratio: coalesce(ref("request.aspectRatio"), "9:16"), ratio: coalesce(ref("request.aspectRatio"), "9:16"),
     images: newAPIVideoTasksMediaURLs("request.images"),
-    image: omit(first(map(sorted(ref("request.images")), "media", ref("media.value")))),
-    image_urls: newAPIVideoTasksMediaURLs("request.images"),
     videos: newAPIVideoTasksMediaURLs("request.videos"),
-    audios: newAPIVideoTasksMediaURLs("request.audios"),
-    video_urls: newAPIVideoTasksMediaURLs("request.videos"),
-    audio_urls: newAPIVideoTasksMediaURLs("request.audios")
+    audios: newAPIVideoTasksMediaURLs("request.audios")
   }),
   poll: { method: "GET", path: "/v1/video/tasks/{{taskId}}" },
   response: asyncResponse("video", {

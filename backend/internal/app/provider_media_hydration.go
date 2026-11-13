@@ -41,6 +41,12 @@ func (s *Service) hydrateGenerationMedia(userID string, input *canvasGenerationI
 			if err != nil {
 				return err
 			}
+			if strings.TrimSpace(input.Config.InterfaceType) == string(model.ChannelInterfaceNewAPIVideoTasks) {
+				mediaPolicy.requireURL = false
+				mediaPolicy.preferURL = false
+				mediaPolicy.forceBase64 = true
+				mediaPolicy.explicitTransport = "base64"
+			}
 		}
 		for index := range group {
 			if err := s.hydrateProviderMedia(userID, &group[index], mediaPolicy); err != nil {

@@ -73,6 +73,17 @@ func TestProviderMediaHydrationPolicyPrefersObjectURLs(t *testing.T) {
 	}
 }
 
+func TestProviderMediaHydrationPolicyEmbedsXiaolihaiBase64(t *testing.T) {
+	policy := providerMediaHydrationPolicyFor(context.Background(), canvasGenerationInput{Config: providerConfig{InterfaceType: string(model.ChannelInterfaceNewAPIVideoTasks)}})
+	if policy.requireURL || policy.preferURL || !policy.forceBase64 {
+		t.Fatalf("xiaolihai policy = %#v, want forceBase64 without public URLs", policy)
+	}
+	channel2 := providerMediaHydrationPolicyFor(context.Background(), canvasGenerationInput{Config: providerConfig{InterfaceType: string(model.ChannelInterfaceNewAPIChannel2)}})
+	if !channel2.requireURL || !channel2.preferURL || channel2.forceBase64 {
+		t.Fatalf("channel-2 policy changed = %#v", channel2)
+	}
+}
+
 func TestProviderRequestErrorDetails(t *testing.T) {
 	tests := []struct {
 		name string

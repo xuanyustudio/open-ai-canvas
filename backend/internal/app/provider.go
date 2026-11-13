@@ -308,13 +308,19 @@ type providerMediaHydrationPolicy struct {
 func providerMediaHydrationPolicyFor(ctx context.Context, input canvasGenerationInput) providerMediaHydrationPolicy {
 	policy := providerMediaHydrationPolicy{preferURL: providerPrefersMediaURLs(input.Config.InterfaceType, input)}
 	switch strings.TrimSpace(input.Config.InterfaceType) {
-	case string(model.ChannelInterfaceNewAPIVideo), string(model.ChannelInterfaceNewAPIChannel1), string(model.ChannelInterfaceNewAPIChannel2), string(model.ChannelInterfaceNewAPIVideoTasks), string(model.ChannelInterfaceVolcengineArkVideo), string(model.ChannelInterfaceVolcengineArkAgentPlanVideo), string(model.ChannelInterfaceMiniMaxVideo):
+	case string(model.ChannelInterfaceNewAPIVideo), string(model.ChannelInterfaceNewAPIChannel1), string(model.ChannelInterfaceNewAPIChannel2), string(model.ChannelInterfaceVolcengineArkVideo), string(model.ChannelInterfaceVolcengineArkAgentPlanVideo), string(model.ChannelInterfaceMiniMaxVideo):
 		policy.requireURL = true
 		policy.preferURL = true
 	}
 	if adapter, ok := protocolAdapterForContext(ctx, input.Config.InterfaceType); ok && adapter.Metadata().RequiresPublicMediaURLs {
 		policy.requireURL = true
 		policy.preferURL = true
+	}
+	if strings.TrimSpace(input.Config.InterfaceType) == string(model.ChannelInterfaceNewAPIVideoTasks) {
+		// 小力孩上游 MiniMax 无法稳定拉取影策公网签名 URL，改为内嵌 data URI。
+		policy.requireURL = false
+		policy.preferURL = false
+		policy.forceBase64 = true
 	}
 	if input.Mask != nil {
 		policy.requireURL = false

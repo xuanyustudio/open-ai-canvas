@@ -22,14 +22,11 @@
 | --- | --- | --- | --- | --- |
 | `model` | string | 是 | `model` | 上游模型 ID，按影策当前选用的模型发送，不写死网关示例名。 |
 | `prompt` | string | 是 | `prompt` | 视频生成提示词。 |
-| `images` | media[] | 否 | `images` | 参考图 URL 数组。这是小力孩网关识别的多图字段；同时兼容 image_urls，第一张也会写入 image。 |
-| `videos` | media[] | 否 | `videos` | 参考视频 URL 数组。 |
-| `audios` | media[] | 否 | `audios` | 参考音频 URL 数组。 |
+| `images` | media[] | 否 | `images` | 参考图，发送为 data URI（最多 9 张）；空数组不发送。超预算时先压缩。 |
+| `videos` | media[] | 否 | `videos` | 参考视频，发送为 data URI（最多 3 个）；空则省略。 |
+| `audios` | media[] | 否 | `audios` | 参考音频，发送为 data URI（最多 3 个）；空则省略。 |
 | `duration` | integer | 否 | `seconds` | 时长秒数，发送为 seconds 字符串。 |
-| `aspectRatio` | string | 否 | `aspect_ratio / ratio` | 画幅比例，同时发送 aspect_ratio 与 ratio。 |
-| `resolution` | string | 否 | `resolution` | 可选分辨率档位。 |
-| `generateAudio` | boolean | 否 | `generate_audio` | 可选，是否同时生成音频。 |
-| `watermark` | boolean | 否 | `unsupported` | 当前不发送水印字段。 |
+| `aspectRatio` | string | 否 | `aspect_ratio / ratio` | 画幅比例，同时发送 aspect_ratio 与 ratio，缺省 9:16。 |
 | `providerOptions` | object | 否 | `provider-specific fields` | 插件命名空间内的厂商扩展字段。 |
 
 ## 上游请求模板逐字段清单
@@ -44,17 +41,11 @@
 | `create.body.model` | `{"$ref":"request.model"}` |
 | `create.body.prompt` | `{"$ref":"request.prompt"}` |
 | `create.body.seconds` | `{"$toString":{"$ref":"request.duration"}}` |
-| `create.body.aspect_ratio` | `{"$coalesce":[{"$ref":"request.aspectRatio"},"16:9"]}` |
-| `create.body.ratio` | `{"$coalesce":[{"$ref":"request.aspectRatio"},"16:9"]}` |
-| `create.body.resolution` | `{"$omitEmpty":{"$ref":"request.resolution"}}` |
-| `create.body.generate_audio` | `{"$ref":"request.generateAudio"}` |
+| `create.body.aspect_ratio` | `{"$coalesce":[{"$ref":"request.aspectRatio"},"9:16"]}` |
+| `create.body.ratio` | `{"$coalesce":[{"$ref":"request.aspectRatio"},"9:16"]}` |
 | `create.body.images` | `{"$omitEmpty":{"$map":{"from":{"$sortByOrder":{"$ref":"request.images"}},"as":"media","in":{"$ref":"media.value"}}}}` |
-| `create.body.image` | `{"$omitEmpty":{"$first":{"$map":{"from":{"$sortByOrder":{"$ref":"request.images"}},"as":"media","in":{"$ref":"media.value"}}}}}` |
-| `create.body.image_urls` | `{"$omitEmpty":{"$map":{"from":{"$sortByOrder":{"$ref":"request.images"}},"as":"media","in":{"$ref":"media.value"}}}}` |
 | `create.body.videos` | `{"$omitEmpty":{"$map":{"from":{"$sortByOrder":{"$ref":"request.videos"}},"as":"media","in":{"$ref":"media.value"}}}}` |
 | `create.body.audios` | `{"$omitEmpty":{"$map":{"from":{"$sortByOrder":{"$ref":"request.audios"}},"as":"media","in":{"$ref":"media.value"}}}}` |
-| `create.body.video_urls` | `{"$omitEmpty":{"$map":{"from":{"$sortByOrder":{"$ref":"request.videos"}},"as":"media","in":{"$ref":"media.value"}}}}` |
-| `create.body.audio_urls` | `{"$omitEmpty":{"$map":{"from":{"$sortByOrder":{"$ref":"request.audios"}},"as":"media","in":{"$ref":"media.value"}}}}` |
 | `poll.method` | `"GET"` |
 | `poll.path` | `"/v1/video/tasks/{{taskId}}"` |
 
@@ -81,7 +72,7 @@
 
 ## 兼容边界
 
-该协议创建路径与 NewAPI Video Generations Channel 2 相同（POST /v1/video/generations），但查询走 GET /v1/video/tasks/{taskId}，适用于小力孩等使用该查询路径的网关。创建体按钱柜可用的参数表发送多图字段 images（URL 数组），同时发送 aspect_ratio 与 ratio、seconds，以及有素材时的 videos/audios。不能与 newapi-channel-2 混用，也不能根据模型名猜测。
+该协议创建路径与 NewAPI Video Generations Channel 2 相同（POST /v1/video/generations），但查询走 GET /v1/video/tasks/{taskId}，适用于小力孩等使用该查询路径的网关。创建体对齐小力孩官方视频适配文档：只发送 model、prompt、aspect_ratio、ratio、seconds，以及非空时的 images/videos/audios；缺省画幅 9:16。参考素材发送为 data URI（宿主会读取本地资源或拉取 URL 后内嵌，超 80MB 原图预算时压缩图片），避免上游无法访问影策公网地址。不能与 newapi-channel-2 混用，也不能根据模型名猜测。
 
 <!-- YINGCE_MANIFEST_CONTRACT_START -->
 ## Manifest 完整接口定义
@@ -127,7 +118,7 @@
           "agent"
         ],
         "baseUrl": "http://127.0.0.1:3000",
-        "requiresPublicMediaUrls": true,
+        "requiresPublicMediaUrls": false,
         "auth": {
           "type": "bearer",
           "field": "apiKey"
@@ -152,21 +143,21 @@
             "type": "media[]",
             "required": false,
             "mapping": "images",
-            "description": "参考图 URL 数组。这是小力孩网关识别的多图字段；同时兼容 image_urls，第一张也会写入 image。"
+            "description": "参考图，发送为 data URI（最多 9 张）；空数组不发送。超预算时先压缩。"
           },
           {
             "name": "videos",
             "type": "media[]",
             "required": false,
             "mapping": "videos",
-            "description": "参考视频 URL 数组。"
+            "description": "参考视频，发送为 data URI（最多 3 个）；空则省略。"
           },
           {
             "name": "audios",
             "type": "media[]",
             "required": false,
             "mapping": "audios",
-            "description": "参考音频 URL 数组。"
+            "description": "参考音频，发送为 data URI（最多 3 个）；空则省略。"
           },
           {
             "name": "duration",
@@ -180,28 +171,7 @@
             "type": "string",
             "required": false,
             "mapping": "aspect_ratio / ratio",
-            "description": "画幅比例，同时发送 aspect_ratio 与 ratio。"
-          },
-          {
-            "name": "resolution",
-            "type": "string",
-            "required": false,
-            "mapping": "resolution",
-            "description": "可选分辨率档位。"
-          },
-          {
-            "name": "generateAudio",
-            "type": "boolean",
-            "required": false,
-            "mapping": "generate_audio",
-            "description": "可选，是否同时生成音频。"
-          },
-          {
-            "name": "watermark",
-            "type": "boolean",
-            "required": false,
-            "mapping": "unsupported",
-            "description": "当前不发送水印字段。"
+            "description": "画幅比例，同时发送 aspect_ratio 与 ratio，缺省 9:16。"
           },
           {
             "name": "providerOptions",
@@ -232,7 +202,7 @@
                 {
                   "$ref": "request.aspectRatio"
                 },
-                "16:9"
+                "9:16"
               ]
             },
             "ratio": {
@@ -240,50 +210,10 @@
                 {
                   "$ref": "request.aspectRatio"
                 },
-                "16:9"
+                "9:16"
               ]
             },
-            "resolution": {
-              "$omitEmpty": {
-                "$ref": "request.resolution"
-              }
-            },
-            "generate_audio": {
-              "$ref": "request.generateAudio"
-            },
             "images": {
-              "$omitEmpty": {
-                "$map": {
-                  "from": {
-                    "$sortByOrder": {
-                      "$ref": "request.images"
-                    }
-                  },
-                  "as": "media",
-                  "in": {
-                    "$ref": "media.value"
-                  }
-                }
-              }
-            },
-            "image": {
-              "$omitEmpty": {
-                "$first": {
-                  "$map": {
-                    "from": {
-                      "$sortByOrder": {
-                        "$ref": "request.images"
-                      }
-                    },
-                    "as": "media",
-                    "in": {
-                      "$ref": "media.value"
-                    }
-                  }
-                }
-              }
-            },
-            "image_urls": {
               "$omitEmpty": {
                 "$map": {
                   "from": {
@@ -314,36 +244,6 @@
               }
             },
             "audios": {
-              "$omitEmpty": {
-                "$map": {
-                  "from": {
-                    "$sortByOrder": {
-                      "$ref": "request.audios"
-                    }
-                  },
-                  "as": "media",
-                  "in": {
-                    "$ref": "media.value"
-                  }
-                }
-              }
-            },
-            "video_urls": {
-              "$omitEmpty": {
-                "$map": {
-                  "from": {
-                    "$sortByOrder": {
-                      "$ref": "request.videos"
-                    }
-                  },
-                  "as": "media",
-                  "in": {
-                    "$ref": "media.value"
-                  }
-                }
-              }
-            },
-            "audio_urls": {
               "$omitEmpty": {
                 "$map": {
                   "from": {

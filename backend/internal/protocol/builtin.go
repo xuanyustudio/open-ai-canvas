@@ -234,6 +234,7 @@ func newAPIVideosAdapter() Adapter {
 func newAPIVideoTasksAdapter() Adapter {
 	info := metadata("newapi-video-tasks", "NewAPI Video Tasks", "NewAPI", CapabilityVideo, "POST /v1/video/generations", "GET /v1/video/tasks/{task_id}", "application/json")
 	info.Parameters = newAPIVideoTasksParams()
+	info.RequiresPublicMediaURLs = false
 	return videoAdapter(info, newAPIVideoTasksCreate)
 }
 
@@ -241,39 +242,32 @@ func newAPIVideoTasksParams() []Parameter {
 	return []Parameter{
 		{Name: "model", Type: "string", Required: true, Mapping: "model", Description: "上游模型标识，按影策当前选用的模型发送。"},
 		{Name: "prompt", Type: "string", Required: true, Mapping: "prompt", Description: "视频生成提示词。"},
-		{Name: "images", Type: "media[]", Mapping: "images", Description: "参考图片 URL 数组。这是网关识别的多图字段；同时兼容 image_urls，第一张也会写入 image。"},
-		{Name: "videos", Type: "media[]", Mapping: "videos", Description: "参考视频 URL 数组。"},
-		{Name: "audios", Type: "media[]", Mapping: "audios", Description: "参考音频 URL 数组。"},
+		{Name: "images", Type: "media[]", Mapping: "images", Description: "参考图片，发送为 data URI（最多 9 张）；空数组不发送。超预算时先压缩。"},
+		{Name: "videos", Type: "media[]", Mapping: "videos", Description: "参考视频，发送为 data URI（最多 3 个）；空则省略。"},
+		{Name: "audios", Type: "media[]", Mapping: "audios", Description: "参考音频，发送为 data URI（最多 3 个）；空则省略。"},
 		{Name: "duration", Type: "integer", Mapping: "seconds", Description: "视频时长，发送为 seconds 字符串。"},
-		{Name: "aspectRatio", Type: "string", Mapping: "aspect_ratio / ratio", Description: "画幅比例，同时发送 aspect_ratio 与 ratio。"},
-		{Name: "resolution", Type: "string", Mapping: "resolution", Description: "可选分辨率档位。"},
-		{Name: "generateAudio", Type: "boolean", Mapping: "generate_audio", Description: "可选，是否同时生成音频。"},
-		{Name: "watermark", Type: "boolean", Mapping: "unsupported", Description: "当前适配器不发送水印字段。"},
+		{Name: "aspectRatio", Type: "string", Mapping: "aspect_ratio / ratio", Description: "画幅比例，同时发送 aspect_ratio 与 ratio，缺省 9:16。"},
 	}
 }
 
-// newAPIVideoTasksCreate 只给 newapi-video-tasks 使用。字段按小力孩/钱柜可用的参数表发送：
-// images/videos/audios 为 URL 数组，aspect_ratio 与 ratio 同时发送，时长字段为 seconds。
+// newAPIVideoTasksCreate 只给 newapi-video-tasks 使用。字段对齐小力孩官方视频适配文档：
+// model、prompt、aspect_ratio、ratio、seconds，以及非空时的 images/videos/audios。
+// 参考素材改为 data URI 内嵌，避免上游 MiniMax 拉取影策公网 URL 超时。
 // 不要改 newAPIVideoGenerationsCreate，Channel 2 仍走 image_urls。
 func newAPIVideoTasksCreate(r GenerationRequest) (RequestSpec, error) {
-	ratio := defaultValue(r.AspectRatio, "16:9")
+	if err := PrepareNewAPIVideoTasksMedia(context.Background(), &r); err != nil {
+		return RequestSpec{}, err
+	}
+	ratio := defaultValue(r.AspectRatio, "9:16")
 	body := map[string]any{"model": r.Model, "prompt": r.Prompt, "seconds": strconv.Itoa(defaultInt(r.Duration, 6)), "aspect_ratio": ratio, "ratio": ratio}
-	copyIf(body, "resolution", r.Resolution)
-	if r.GenerateAudio {
-		body["generate_audio"] = true
-	}
-	if images := mediaValues(r.Images); len(images) > 0 {
+	if images := newAPIVideoTasksDataURIs(r.Images); len(images) > 0 {
 		body["images"] = images
-		body["image_urls"] = images
-		body["image"] = images[0]
 	}
-	if videos := mediaValues(r.Videos); len(videos) > 0 {
+	if videos := newAPIVideoTasksDataURIs(r.Videos); len(videos) > 0 {
 		body["videos"] = videos
-		body["video_urls"] = videos
 	}
-	if audios := mediaValues(r.Audios); len(audios) > 0 {
+	if audios := newAPIVideoTasksDataURIs(r.Audios); len(audios) > 0 {
 		body["audios"] = audios
-		body["audio_urls"] = audios
 	}
 	return jsonSpec(http.MethodPost, "/v1/video/generations", body), nil
 }

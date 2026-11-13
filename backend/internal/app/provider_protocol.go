@@ -74,6 +74,11 @@ func runProtocolAdapterTaskWithPolicy(ctx context.Context, input canvasGeneratio
 		if err := uploadProtocolMedia(ctx, input, adapter, &request); err != nil {
 			return nil, err
 		}
+		if adapter.Metadata().ID == "newapi-video-tasks" {
+			if err := protocol.PrepareNewAPIVideoTasksMedia(ctx, &request); err != nil {
+				return nil, err
+			}
+		}
 		spec, err := adapter.BuildCreate(ctx, protocol.RequestContext{BaseURL: input.Config.BaseURL, Request: request})
 		if err != nil {
 			return nil, err
