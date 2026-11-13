@@ -224,7 +224,8 @@ func (r *dramaRun) syncJobs() error {
 			}
 		}
 	}
-	return nil
+	// 终态回写后对账一次：清掉作业已结束但段仍停在「生成中」的孤儿状态。
+	return r.s.resolveOrphanDramaBusySegments(r.project.ID)
 }
 
 // dramaTaskMediaRecoveryRetryable 表示失败任务仍有作品恢复检查点且未用尽自动重试窗口。
@@ -413,7 +414,13 @@ func (r *dramaRun) failJob(job *model.DramaJob, reason string) error {
 	case model.DramaJobSegmentPrompt:
 		var payload dramaRevisionPayload
 		_ = json.Unmarshal([]byte(job.PayloadJSON), &payload)
-		_, err := r.s.repo.UpdateDramaSegmentRevision(job.ShotID, payload.Revision, map[string]any{"prompt_status": model.DramaMediaFailed, "prompt_error": truncateRunes(reason, 300)})
+		message := truncateRunes(reason, 300)
+		applied, err := r.s.repo.UpdateDramaSegmentRevision(job.ShotID, payload.Revision, map[string]any{"prompt_status": model.DramaMediaFailed, "prompt_error": message})
+		if err != nil || applied {
+			return err
+		}
+		// 版本已变时 CAS 落空：仍清掉撰写中，否则页面会一直转圈且不能重试。
+		_, err = r.s.repo.FailDramaSegmentPromptBusy(job.ShotID, message)
 		return err
 	case model.DramaJobScript, model.DramaJobRender:
 		if episode, err := r.s.repo.DramaEpisode(r.project.ID, job.EpisodeID); err == nil {
@@ -425,7 +432,13 @@ func (r *dramaRun) failJob(job *model.DramaJob, reason string) error {
 	case model.DramaJobSegmentVideo:
 		var payload dramaRevisionPayload
 		_ = json.Unmarshal([]byte(job.PayloadJSON), &payload)
-		_, err := r.s.repo.UpdateDramaSegmentRevision(job.ShotID, payload.Revision, map[string]any{"video_status": model.DramaMediaFailed, "video_error": truncateRunes(reason, 500)})
+		message := truncateRunes(reason, 500)
+		applied, err := r.s.repo.UpdateDramaSegmentRevision(job.ShotID, payload.Revision, map[string]any{"video_status": model.DramaMediaFailed, "video_error": message})
+		if err != nil || applied {
+			return err
+		}
+		// 版本已变时 CAS 落空：仍清掉生成中，否则会永久显示「生成视频中」且无法点重新生成。
+		_, err = r.s.repo.FailDramaSegmentVideoBusy(job.ShotID, message)
 		return err
 	}
 	return nil
@@ -1554,7 +1567,12 @@ func (r *dramaRun) applySegmentPrompt(job *model.DramaJob, task *model.Task) err
 		}
 		return &dramaResultIssue{message: fmt.Sprintf("视频提示词 %d 个字符，自动精简 %d 次后仍超过本段上限 %d 个字符（视频模型上限减去开头的参考图说明）；请手动精简后保存，或重新撰写", chars, payload.Condensed, payload.MaxChars)}
 	}
-	_, err = r.s.repo.UpdateDramaSegmentRevision(job.ShotID, payload.Revision, map[string]any{"video_prompt": truncateRunes(prompt, 12000), "prompt_status": model.DramaMediaReady, "prompt_error": "", "prompt_seconds": payload.Seconds})
+	applied, err := r.s.repo.UpdateDramaSegmentRevision(job.ShotID, payload.Revision, map[string]any{"video_prompt": truncateRunes(prompt, 12000), "prompt_status": model.DramaMediaReady, "prompt_error": "", "prompt_seconds": payload.Seconds})
+	if err != nil || applied {
+		return err
+	}
+	// 撰写期间镜头已改：这一版作废；清掉可能残留的“撰写中”。
+	_, err = r.s.repo.FailDramaSegmentPromptBusy(job.ShotID, "本段已更新，原提示词结果已作废，请重新撰写")
 	return err
 }
 

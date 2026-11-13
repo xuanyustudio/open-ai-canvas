@@ -521,6 +521,10 @@ func (r *dramaRun) applySegmentVideo(job *model.DramaJob, task *model.Task) erro
 		}
 	}
 	if !current {
+		// 本段版本已变：结果只进版本库。若段仍停在生成中（CAS 未改到 stale），清掉 busy，避免永久转圈。
+		if _, err := r.s.repo.FailDramaSegmentVideoBusy(job.ShotID, "本段已更新，原生成结果已作废，请重新生成"); err != nil {
+			return err
+		}
 		return nil
 	}
 	if segment.VideoResourceID != resourceID {
