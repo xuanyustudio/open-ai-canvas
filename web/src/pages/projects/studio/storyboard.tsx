@@ -9,7 +9,7 @@ import { DramaModelPicker, useDramaModelCatalog } from "../drama-model-picker";
 import { dramaVideoResolutionValue } from "@/lib/drama/model-choice";
 import { formatVideoResolutionLabel } from "@/lib/video-generation-options";
 import { aspectRatioValue, formatClock, mediaBusy, MediaThumb, useResourceMediaUrl } from "../drama-shared";
-import { promptReady, secondsLabel, SegmentInputs, SegmentStatus, segmentState } from "./segment-parts";
+import { promptReady, secondsLabel, SegmentInputs, SegmentStatus, segmentState, videoBusy } from "./segment-parts";
 import { dramaVideoOptionFor } from "./segment-quote";
 import { isTypingTarget } from "./use-studio";
 import { progressFillStyle } from "@/lib/progress-fill";
@@ -42,7 +42,7 @@ const SHOT_PREVIEW = 3;
 
 /** 可以提交视频的段：提示词已就绪且不在生成中。批量操作只提交这些段，其余跳过并说明。 */
 function generatable(segment: DramaSegment) {
-    return promptReady(segment) && !mediaBusy(segment.videoStatus);
+    return promptReady(segment) && !videoBusy(segment);
 }
 
 /** 本段已有生成好的视频（含过期或后处理失败的），不论能否直接用于下一段。 */
@@ -212,7 +212,7 @@ const SegmentCard = memo(function SegmentCard({ segment, segmentShots, aspectRat
                         title={!promptReady(segment) ? "先撰写或确认本段视频提示词" : hasVideo(segment) ? "重新调用视频模型生成本段，会产生新的费用" : undefined}
                         onClick={() => act().onGenerate([segment.index])}
                     >
-                        {mediaBusy(segment.videoStatus) ? (segment.videoStatus === "queued" && segment.videoWait ? "等待中" : segment.request.firstFramePending ? "等上一段" : "生成中") : hasVideo(segment) ? "重新生成" : "生成"}
+                        {videoBusy(segment) ? (segment.videoStatus === "queued" && segment.videoWait ? "等待中" : segment.request.firstFramePending ? "等上一段" : "生成中") : hasVideo(segment) ? "重新生成" : "生成"}
                     </Button>
                 </span>
             </footer>

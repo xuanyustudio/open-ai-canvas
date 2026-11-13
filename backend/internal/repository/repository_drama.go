@@ -30,6 +30,7 @@ func (r *Repository) DramaProduction(projectID string) (*model.DramaProduction, 
 // RunningDramaProductions 返回需要调度循环推进的项目：运行中的项目，以及暂停或已完成但仍有已派发任务的项目。
 // 后者只回收任务结果（已付费的视频、尾帧、参考图下载），不再派发新工作。
 // 含“上游已成功、本地保存失败且仍有恢复检查点”的失败作业，避免暂停后项目掉出调度、已出图无法落库。
+// 也含段状态仍是生成中、但已无运行中作业的项目：版本错位时作业已终态而段卡在 running，必须回到调度里清掉。
 func (r *Repository) RunningDramaProductions(limit int) ([]model.DramaProduction, error) {
 	var productions []model.DramaProduction
 	pending := r.db.Model(&model.DramaJob{}).Select("project_id").Where("status = ?", model.DramaJobRunning)
@@ -39,7 +40,16 @@ func (r *Repository) RunningDramaProductions(limit int) ([]model.DramaProduction
 		time.Now().Add(-24*time.Hour),
 		r.db.Model(&model.Task{}).Select("id").Where("status = ? AND media_recovery_json <> '' AND media_recovery_json IS NOT NULL", model.TaskStatusFailed),
 	)
-	err := r.db.Where("status = ? OR project_id IN (?) OR project_id IN (?)", model.DramaStatusRunning, pending, recoverable).
+	runningVideoJobs := r.db.Model(&model.DramaJob{}).Select("shot_id").
+		Where("status = ? AND kind = ? AND shot_id <> ''", model.DramaJobRunning, model.DramaJobSegmentVideo)
+	runningPromptJobs := r.db.Model(&model.DramaJob{}).Select("shot_id").
+		Where("status = ? AND kind = ? AND shot_id <> ''", model.DramaJobRunning, model.DramaJobSegmentPrompt)
+	orphanedBusy := r.db.Model(&model.DramaSegment{}).Select("project_id").Where(
+		"(video_status = ? AND id NOT IN (?)) OR (prompt_status = ? AND id NOT IN (?))",
+		model.DramaMediaRunning, runningVideoJobs,
+		model.DramaMediaRunning, runningPromptJobs,
+	)
+	err := r.db.Where("status = ? OR project_id IN (?) OR project_id IN (?) OR project_id IN (?)", model.DramaStatusRunning, pending, recoverable, orphanedBusy).
 		Order("updated_at asc").Limit(limit).Find(&productions).Error
 	return productions, err
 }
@@ -1210,6 +1220,31 @@ func (r *Repository) UpdateDramaSegmentFields(id string, fields map[string]any) 
 func (r *Repository) UpdateDramaSegmentRevision(id string, revision int64, fields map[string]any) (bool, error) {
 	fields["updated_at"] = time.Now()
 	result := r.db.Model(&model.DramaSegment{}).Where("id = ? AND revision = ?", id, revision).Updates(fields)
+	return result.RowsAffected > 0, result.Error
+}
+
+// DramaBusySegments 返回作品中仍标记为生成中的剧情段（段视频或提示词），供调度对账孤儿 busy 状态。
+func (r *Repository) DramaBusySegments(projectID string) ([]model.DramaSegment, error) {
+	var rows []model.DramaSegment
+	err := r.db.Where("project_id = ? AND (video_status = ? OR prompt_status = ?)", projectID, model.DramaMediaRunning, model.DramaMediaRunning).
+		Order("episode_id, segment_index").Find(&rows).Error
+	return rows, err
+}
+
+// FailDramaSegmentVideoBusy 把仍停在排队/生成中的段视频标为失败，不受 revision 约束。
+// 用于作业已按旧版本终态回写、但段版本已变导致 CAS 落空的情况，避免页面永久显示“生成视频中”。
+func (r *Repository) FailDramaSegmentVideoBusy(id, reason string) (bool, error) {
+	result := r.db.Model(&model.DramaSegment{}).
+		Where("id = ? AND video_status IN ?", id, []string{model.DramaMediaRunning, model.DramaMediaQueued}).
+		Updates(map[string]any{"video_status": model.DramaMediaFailed, "video_error": reason, "updated_at": time.Now()})
+	return result.RowsAffected > 0, result.Error
+}
+
+// FailDramaSegmentPromptBusy 把仍停在撰写中的段提示词标为失败，不受 revision 约束。
+func (r *Repository) FailDramaSegmentPromptBusy(id, reason string) (bool, error) {
+	result := r.db.Model(&model.DramaSegment{}).
+		Where("id = ? AND prompt_status IN ?", id, []string{model.DramaMediaRunning, model.DramaMediaQueued}).
+		Updates(map[string]any{"prompt_status": model.DramaMediaFailed, "prompt_error": reason, "updated_at": time.Now()})
 	return result.RowsAffected > 0, result.Error
 }
 

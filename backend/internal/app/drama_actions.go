@@ -772,10 +772,58 @@ func (s *Service) DramaCastImpact(userID string, projectID string, castID string
 	return map[string]any{"segments": len(segments), "episodes": len(episodes)}, nil
 }
 
+// resolveOrphanDramaBusySegments 把“段仍显示生成中、但已无运行中作业”的孤儿状态落成失败，
+// 这样「重试失败」和「重新生成」能接手，而不是被 mediaBusy 永久挡住。
+func (s *Service) resolveOrphanDramaBusySegments(projectID string) error {
+	segments, err := s.repo.DramaBusySegments(projectID)
+	if err != nil {
+		return err
+	}
+	if len(segments) == 0 {
+		return nil
+	}
+	jobs, err := s.repo.DramaJobsByStatus(projectID, model.DramaJobQueued, model.DramaJobRunning)
+	if err != nil {
+		return err
+	}
+	activeVideo := map[string]bool{}
+	activePrompt := map[string]bool{}
+	for _, job := range jobs {
+		if job.ShotID == "" {
+			continue
+		}
+		switch job.Kind {
+		case model.DramaJobSegmentVideo:
+			activeVideo[job.ShotID] = true
+		case model.DramaJobSegmentPrompt:
+			activePrompt[job.ShotID] = true
+		}
+	}
+	for _, segment := range segments {
+		if segment.VideoStatus == model.DramaMediaRunning && !activeVideo[segment.ID] {
+			reason := firstNonEmpty(strings.TrimSpace(segment.VideoError), "生成已中断：作业已结束但状态未回写，请重新生成")
+			if _, err := s.repo.FailDramaSegmentVideoBusy(segment.ID, truncateRunes(reason, 500)); err != nil {
+				return err
+			}
+		}
+		if segment.PromptStatus == model.DramaMediaRunning && !activePrompt[segment.ID] {
+			reason := firstNonEmpty(strings.TrimSpace(segment.PromptError), "撰写已中断：作业已结束但状态未回写，请重新撰写")
+			if _, err := s.repo.FailDramaSegmentPromptBusy(segment.ID, truncateRunes(reason, 300)); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // RetryFailedDrama 把失败槽位重置为待生成，由调度循环重新派发。
 func (s *Service) RetryFailedDrama(userID, projectID string) (map[string]any, error) {
 	project, p, err := s.dramaForUser(userID, projectID)
 	if err != nil {
+		return nil, err
+	}
+	// 先把卡在「生成中」的孤儿段落成失败，再进入下面的失败重试列表。
+	if err := s.resolveOrphanDramaBusySegments(project.ID); err != nil {
 		return nil, err
 	}
 	segments, err := s.repo.FailedDramaSegments(project.ID, 5000)
@@ -893,7 +941,19 @@ func (s *Service) GenerateDramaSegments(userID, projectID, episodeID string, req
 			return nil, BadAuthRequest("请先重新撰写过期或缺失的视频提示词")
 		}
 		if mediaBusyStatus(seg.VideoStatus) {
-			return nil, BadAuthRequest("剧情段视频正在生成或排队")
+			// 作业已终态但段仍 busy 时先对账；对账后仍 busy 才拒绝，避免永久锁死。
+			if err := s.resolveOrphanDramaBusySegments(project.ID); err != nil {
+				return nil, err
+			}
+			fresh, loadErr := s.repo.DramaSegment(project.ID, seg.ID)
+			if loadErr != nil {
+				return nil, loadErr
+			}
+			seg = *fresh
+			known[index] = seg
+			if mediaBusyStatus(seg.VideoStatus) {
+				return nil, BadAuthRequest("剧情段视频正在生成或排队")
+			}
 		}
 		settings := parseDramaSettings(p.SettingsJSON)
 		choice := segmentVideoChoice(seg, settings.Models.Video)

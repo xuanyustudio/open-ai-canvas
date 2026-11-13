@@ -34,6 +34,10 @@ export function segmentState(segment: DramaSegment): { tone: SegmentTone; label:
     if (segment.videoStatus === "queued" && segment.videoWait) return { tone: "blocked", label: videoWaitLabel(segment.videoWait), detail: segment.videoWait };
     if (segment.videoStatus === "queued" && segment.videoJob?.status !== "running") return { tone: "busy", label: "排队提交中" };
     if (mediaBusy(segment.videoStatus)) {
+        // 作业已失败/取消但段状态未回写时，不要继续冒充“生成中”，否则按钮会锁死。
+        if (segment.videoJob && segment.videoJob.status !== "queued" && segment.videoJob.status !== "running") {
+            return segment.videoReprocessable ? { tone: "failed", label: "视频后处理失败", detail: segment.videoJob.error || segment.videoError } : { tone: "failed", label: "视频生成失败", detail: segment.videoJob.error || segment.videoError };
+        }
         if (segment.request.firstFramePending) return { tone: "blocked", label: "等待上一段" };
         // 按班次出片的渠道会先候车，显示上游给出的真实阶段，而不是笼统的“生成中”。
         const stage = segment.videoJob?.status === "running" ? segment.videoJob.providerStage : undefined;
@@ -46,6 +50,13 @@ export function segmentState(segment: DramaSegment): { tone: SegmentTone; label:
 
 export function promptReady(segment: DramaSegment) {
     return segment.custom || segment.promptStatus === "ready";
+}
+
+/** 段视频是否仍在真实排队/生成：作业已失败或取消时不算 busy，避免按钮被永久锁死。 */
+export function videoBusy(segment: DramaSegment) {
+    if (!mediaBusy(segment.videoStatus)) return false;
+    if (segment.videoJob && segment.videoJob.status !== "queued" && segment.videoJob.status !== "running") return false;
+    return true;
 }
 
 export function SegmentStatus({ segment }: { segment: DramaSegment }) {

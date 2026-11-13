@@ -16,8 +16,8 @@ import { useEffectiveConfig } from "@/stores/use-config-store";
 import { useUserStore } from "@/stores/use-user-store";
 import { dramaSegmentQuoteMissing, dramaSegmentVideoRequirements, dramaVideoOptionFor, SEGMENT_NO_QUOTE_HINT } from "./segment-quote";
 
-import { CAST_KIND_LABEL, formatCredits, mediaBusy, MediaThumb } from "../drama-shared";
-import { promptReady, secondsLabel, SegmentStatus, SegmentVideo, videoWaitLabel } from "./segment-parts";
+import { CAST_KIND_LABEL, formatCredits, MediaThumb } from "../drama-shared";
+import { promptReady, secondsLabel, SegmentStatus, SegmentVideo, videoBusy, videoWaitLabel } from "./segment-parts";
 import { DramaTakeList, shortModelName } from "./take-list";
 import { CanvasResourceMentionTextarea } from "@/components/canvas/canvas-resource-mention-textarea";
 import type { CanvasResourceReference } from "@/lib/canvas/canvas-resource-references";
@@ -293,7 +293,7 @@ function SegmentToolbar({
     const resolutionFallback = Boolean(changed && videoResolution && chosenOption && !supportedResolution);
     const requirements = dramaSegmentVideoRequirements(segment.request, chosenOption, changed, videoResolution);
     const quoteMissing = creditsEnabled && dramaSegmentQuoteMissing(config, choice, requirements);
-    const running = mediaBusy(segment.videoStatus);
+    const running = videoBusy(segment);
     const writingNow = segment.promptStatus === "queued" || segment.promptStatus === "running";
     const sent = [segment.request.header, segment.videoPrompt.trim()].filter(Boolean).join("\n\n");
     const generateLabel = running
