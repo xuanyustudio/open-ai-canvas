@@ -58,7 +58,7 @@ type CanvasStore = {
 };
 
 const initialViewport: ViewportTransform = { x: 0, y: 0, k: 1 };
-export const CANVAS_STORE_KEY = "yingce:canvas_store";
+export const CANVAS_STORE_KEY = "canvas:canvas_store";
 
 /** Upload placeholders and empty assistant sessions are UI state, not saved work. */
 function hasDraftContent(project: CanvasProject) {
@@ -122,7 +122,7 @@ type CanvasPersistenceJournal = {
     projects: CanvasProject[];
 };
 
-const CANVAS_PERSISTENCE_JOURNAL_KEY = "yingce:canvas_store_journal";
+const CANVAS_PERSISTENCE_JOURNAL_KEY = "canvas:canvas_store_journal";
 const CANVAS_JOURNAL_MAX_BYTES = 450_000;
 const canvasJournalWriterId = `tab-${nanoid(10)}`;
 
@@ -288,7 +288,7 @@ type CanvasStorageLockOptions = {
     requireCrossRealmLock?: boolean;
 };
 
-const CANVAS_STORAGE_LOCK_PREFIX = "yingce:canvas-generation-storage-lock:";
+const CANVAS_STORAGE_LOCK_PREFIX = "canvas:canvas-generation-storage-lock:";
 const canvasStorageTails = new Map<string, Promise<void>>();
 
 let warnedMissingCanvasStorageLock = false;

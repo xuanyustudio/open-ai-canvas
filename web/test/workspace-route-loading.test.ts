@@ -121,7 +121,7 @@ describe("workspace route loading", () => {
 
         expect(loader).toContain("full-screen-loader-mark");
         expect(loader).toContain("LoadingSignal");
-        expect(loader).not.toContain("YINGCE STUDIO");
+        expect(loader).not.toContain("CANVAS STUDIO");
         expect(loader).not.toContain("loading-cue");
         expect(css).toContain("@keyframes loading-signal-sweep");
         expect(css).toContain("@media (prefers-reduced-motion: reduce)");

@@ -317,7 +317,7 @@ func providerMediaHydrationPolicyFor(ctx context.Context, input canvasGeneration
 		policy.preferURL = true
 	}
 	if strings.TrimSpace(input.Config.InterfaceType) == string(model.ChannelInterfaceNewAPIVideoTasks) {
-		// 小力孩上游 MiniMax 无法稳定拉取影策公网签名 URL，改为内嵌 data URI。
+		// 小力孩上游 MiniMax 无法稳定拉取本系统公网签名 URL，改为内嵌 data URI。
 		policy.requireURL = false
 		policy.preferURL = false
 		policy.forceBase64 = true

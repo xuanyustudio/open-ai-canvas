@@ -240,7 +240,7 @@ func newAPIVideoTasksAdapter() Adapter {
 
 func newAPIVideoTasksParams() []Parameter {
 	return []Parameter{
-		{Name: "model", Type: "string", Required: true, Mapping: "model", Description: "上游模型标识，按影策当前选用的模型发送。"},
+		{Name: "model", Type: "string", Required: true, Mapping: "model", Description: "上游模型标识，按当前选用的模型发送。"},
 		{Name: "prompt", Type: "string", Required: true, Mapping: "prompt", Description: "视频生成提示词。"},
 		{Name: "images", Type: "media[]", Mapping: "images", Description: "参考图片，发送为 data URI（最多 9 张）；空数组不发送。超预算时先压缩。"},
 		{Name: "videos", Type: "media[]", Mapping: "videos", Description: "参考视频，发送为 data URI（最多 3 个）；空则省略。"},
@@ -252,7 +252,7 @@ func newAPIVideoTasksParams() []Parameter {
 
 // newAPIVideoTasksCreate 只给 newapi-video-tasks 使用。字段对齐小力孩官方视频适配文档：
 // model、prompt、aspect_ratio、ratio、seconds，以及非空时的 images/videos/audios。
-// 参考素材改为 data URI 内嵌，避免上游 MiniMax 拉取影策公网 URL 超时。
+// 参考素材改为 data URI 内嵌，避免上游 MiniMax 拉取本系统公网 URL 超时。
 // 不要改 newAPIVideoGenerationsCreate，Channel 2 仍走 image_urls。
 func newAPIVideoTasksCreate(r GenerationRequest) (RequestSpec, error) {
 	if err := PrepareNewAPIVideoTasksMedia(context.Background(), &r); err != nil {

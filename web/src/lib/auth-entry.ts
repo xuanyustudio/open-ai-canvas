@@ -10,7 +10,7 @@ const AUTH_VIEW_PATHS: Record<AuthView, string> = {
     recovery: "/forgot-password",
 };
 
-const REFERRAL_CODE_STORAGE_KEY = "yingce:referral-code";
+const REFERRAL_CODE_STORAGE_KEY = "canvas:referral-code";
 
 export function authViewFromPath(pathname: string): AuthView | null {
     const entry = (Object.entries(AUTH_VIEW_PATHS) as Array<[AuthView, string]>).find(([, path]) => path === pathname);

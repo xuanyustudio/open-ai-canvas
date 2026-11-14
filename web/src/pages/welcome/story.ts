@@ -1,6 +1,6 @@
 /** 界面文案字段（label、title、subtitle 等）保存 i18n 键，渲染时翻译；首幕标题是品牌名，直接显示。 */
 export const chapters = [
-    { id: "opening", label: "account.welcome.chapters.opening.label", title: "影策", subtitle: "account.welcome.chapters.opening.subtitle", description: "account.welcome.chapters.opening.description" },
+    { id: "opening", label: "account.welcome.chapters.opening.label", title: "Canvas", subtitle: "account.welcome.chapters.opening.subtitle", description: "account.welcome.chapters.opening.description" },
     { id: "story", label: "account.welcome.chapters.story.label", title: "account.welcome.chapters.story.title" },
     { id: "world", label: "account.welcome.chapters.world.label", title: "account.welcome.chapters.world.title" },
     { id: "shots", label: "account.welcome.chapters.shots.label", title: "account.welcome.chapters.shots.title" },
@@ -24,19 +24,26 @@ const reelFrames = (folder: string, names: string[]) => Array.from({ length: 12 
 
 export const welcomeLooks: WelcomeLook[] = [
     {
-        id: "spring", label: "account.welcome.looks.spring.label", title: "account.welcome.looks.spring.title",
+        id: "spring",
+        label: "account.welcome.looks.spring.label",
+        title: "account.welcome.looks.spring.title",
         frames: reelFrames("spring", ["1807", "1669", "4336", "3191", "3250"]),
         screenplay: screenplayKeys("spring"),
         credit: "account.welcome.looks.spring.credit",
     },
     {
-        id: "charge", label: "account.welcome.looks.charge.label", title: "account.welcome.looks.charge.title",
+        id: "charge",
+        label: "account.welcome.looks.charge.label",
+        title: "account.welcome.looks.charge.title",
         frames: reelFrames("charge", ["factory-final", "einar", "robot", "character-final", "factory"]),
         screenplay: screenplayKeys("charge"),
-        video: "/welcome/charge/sequence.mp4", credit: "account.welcome.looks.charge.credit",
+        video: "/welcome/charge/sequence.mp4",
+        credit: "account.welcome.looks.charge.credit",
     },
     {
-        id: "wing-it", label: "account.welcome.looks.wingIt.label", title: "account.welcome.looks.wingIt.title",
+        id: "wing-it",
+        label: "account.welcome.looks.wingIt.label",
+        title: "account.welcome.looks.wingIt.title",
         frames: reelFrames("wing-it", ["banner", "pitch", "sky-01", "barn", "sky-04", "sky-06"]),
         screenplay: screenplayKeys("wingIt"),
         credit: "account.welcome.looks.wingIt.credit",

@@ -207,7 +207,7 @@ describe("电商独立借鉴图片区", () => {
         expect((await sendTransfer("drop", value)).defaultPrevented).toBe(true);
         expect(host.querySelector(".ecommerce-reference-upload")?.classList.contains("is-dragging")).toBe(false);
         await sendTransfer("paste", transfer([first]));
-        const pasted = await sendTransfer("paste", transfer([], { "application/x-yingce-image-resource": JSON.stringify({ resourceId: "owned-reference", name: "已有长图" }) }));
+        const pasted = await sendTransfer("paste", transfer([], { "application/x-canvas-image-resource": JSON.stringify({ resourceId: "owned-reference", name: "已有长图" }) }));
         expect(pasted.defaultPrevented).toBe(true);
         expect(uploads).toEqual([
             { source: { files: [first] }, mode: "detail" },

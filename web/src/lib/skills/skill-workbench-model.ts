@@ -208,7 +208,7 @@ function orderRenames(renames: Array<{ from: string; to: string }>, occupied: Se
         const item = pending[0];
         let temporary = "";
         do {
-            temporary = `__yingce_rename_${temporaryIndex++}__${fileExtension(item.from) ? `.${fileExtension(item.from)}` : ""}`;
+            temporary = `__canvas_rename_${temporaryIndex++}__${fileExtension(item.from) ? `.${fileExtension(item.from)}` : ""}`;
         } while (occupied.has(temporary));
         operations.push({ op: "rename", path: item.from, to: temporary });
         occupied.delete(item.from);

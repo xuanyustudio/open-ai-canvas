@@ -6,8 +6,8 @@ import type { ChannelModelFormValues } from "./channel-model-editor-form";
 
 export type CapabilitySnapshot = Pick<ChannelModelFormValues, "capabilityConfig">;
 export type SavedCapabilityTemplate = { id: string; revision: string; name: string; capability: "text" | "image" | "video"; config: CapabilitySnapshot };
-export const CAPABILITY_TEMPLATES_CHANGED = "yingce:capability-templates-changed";
-export const capabilityTemplatesKey = (scope: string) => scopedStorageKey("yingce:capability-templates", scope);
+export const CAPABILITY_TEMPLATES_CHANGED = "canvas:capability-templates-changed";
+export const capabilityTemplatesKey = (scope: string) => scopedStorageKey("canvas:capability-templates", scope);
 const MAX_STORAGE = 256_000;
 
 type Shape = "string" | "number" | "boolean" | "value" | readonly [Shape] | { [key: string]: Shape };

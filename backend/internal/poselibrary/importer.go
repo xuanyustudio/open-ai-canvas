@@ -72,7 +72,7 @@ type upstreamPose struct {
 	Image    string `json:"原图"`
 }
 
-// genericPack 是影策通用姿势包：{"format":"yingce-pose-library","version":1,"source":{...},"items":[...]}。
+// genericPack 是 Canvas 通用姿势包：{"format":"canvas-pose-library","version":1,"source":{...},"items":[...]}。
 type genericPack struct {
 	Format  string `json:"format"`
 	Version int    `json:"version"`
@@ -129,7 +129,7 @@ func parseImportPack(data []byte) (*importPack, error) {
 		if err := json.Unmarshal(data, &raw); err != nil {
 			return nil, kernel.BadAuthRequest("无法解析姿势包 JSON")
 		}
-		if raw.Format != PackFormat || raw.Version != 1 {
+		if (raw.Format != PackFormat && raw.Format != "yingce-pose-library") || raw.Version != 1 {
 			return nil, kernel.BadAuthRequest(fmt.Sprintf("姿势包须声明 format=%q、version=1", PackFormat))
 		}
 		key := strings.TrimSpace(raw.Source.Key)

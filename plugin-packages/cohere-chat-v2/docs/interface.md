@@ -105,7 +105,7 @@ POST /v2/chat，正文 model/messages。request.textMessages 的纯文本转为�
   "id": "cohere-chat-v2",
   "name": "Cohere Chat v2",
   "version": "2.0.1",
-  "author": "Cohere / 影策",
+  "author": "Cohere / Canvas",
   "description": "Cohere Chat v2 独立请求协议插件。",
   "documentation": "<当前插件的完整 documentation，由 README.md 与 docs/interface.md 拼接而成；为避免 JSON 递归，此处不重复展开正文。>",
   "permissions": [

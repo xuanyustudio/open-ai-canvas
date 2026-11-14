@@ -259,7 +259,7 @@ func (s *Service) ImportLibTV(userID, canvasProjectID, projectUUID string) (*Lib
 	userID = strings.TrimSpace(userID)
 	canvasProjectID = strings.TrimSpace(canvasProjectID)
 	if userID == "" || canvasProjectID == "" {
-		return nil, kernel.Unauthorized("请先打开已同步的" + s.host.BrandName() + "画布")
+		return nil, kernel.Unauthorized(kernel.BrandPrefix("请先打开已同步的", kernel.BrandJoin(s.host.BrandName(), "画布")))
 	}
 	if _, err := s.repo.CanvasProjectForUser(userID, canvasProjectID); err != nil {
 		return nil, err

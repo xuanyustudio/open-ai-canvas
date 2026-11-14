@@ -37,7 +37,7 @@ func TestPasswordResetChangesPasswordConsumesCodeAndRevokesSessions(t *testing.T
 
 	var deliveredCode string
 	svc.SetMailSender(func(_ EmailSettingValue, recipient string, subject string, body string) error {
-		if recipient != user.Email || !strings.HasSuffix(subject, " 是你的影策密码重置验证码") || !strings.HasPrefix(subject, codeFromEmailBody(body)+" ") {
+		if recipient != user.Email || !strings.HasSuffix(subject, " 是你的 Canvas 密码重置验证码") || !strings.HasPrefix(subject, codeFromEmailBody(body)+" ") {
 			t.Fatalf("unexpected reset email: recipient=%q subject=%q", recipient, subject)
 		}
 		deliveredCode = codeFromEmailBody(body)
@@ -256,14 +256,18 @@ func assertRegistrationAndPasswordResetEmailBrand(t *testing.T, fromName, wantNa
 		t.Fatalf("deliveries = %d, want 2", len(deliveries))
 	}
 	for _, delivered := range deliveries {
-		if delivered.fromName != wantName || !strings.Contains(delivered.subject, wantName) || !strings.Contains(delivered.body, wantName) || strings.Contains(delivered.subject, DefaultBrandName) || strings.Contains(delivered.body, DefaultBrandName) {
+		if delivered.fromName != wantName || !strings.Contains(delivered.subject, wantName) || !strings.Contains(delivered.body, wantName) {
 			t.Fatalf("email did not use resolved sender name %q: %#v", wantName, delivered)
 		}
+		// 默认品牌是拉丁短名时，不能用 Contains(DefaultBrandName) 判断泄漏（例如 Custom Canvas 含 Canvas）。
+		if wantName != DefaultBrandName && delivered.fromName == DefaultBrandName {
+			t.Fatalf("email fell back to default brand name %q: %#v", DefaultBrandName, delivered)
+		}
 	}
-	if !strings.HasSuffix(deliveries[0].subject, " 是你的"+wantName+"注册验证码") || !strings.HasSuffix(deliveries[1].subject, " 是你的"+wantName+"密码重置验证码") {
+	if !strings.HasSuffix(deliveries[0].subject, " "+kernel.BrandJoin(kernel.BrandPrefix("是你的", wantName), "注册验证码")) || !strings.HasSuffix(deliveries[1].subject, " "+kernel.BrandJoin(kernel.BrandPrefix("是你的", wantName), "密码重置验证码")) {
 		t.Fatalf("unexpected branded subjects: %#v", deliveries)
 	}
-	if !strings.Contains(deliveries[0].body, "你正在注册"+wantName+"。") {
+	if !strings.Contains(deliveries[0].body, kernel.BrandPrefix("你正在注册", wantName)+"。") {
 		t.Fatalf("registration body did not use resolved sender name: %q", deliveries[0].body)
 	}
 }
@@ -277,7 +281,7 @@ func newPasswordResetTestService(t *testing.T) (*Service, *gorm.DB) {
 	if err := db.AutoMigrate(&model.User{}, &model.AuthSession{}, &model.LoginLog{}, &model.EmailVerificationCode{}, &model.SystemSetting{}, &model.EmailLog{}); err != nil {
 		t.Fatal(err)
 	}
-	settingJSON, err := json.Marshal(EmailSettingValue{Enabled: true, Host: "smtp.example.com", Port: 587, Encryption: "starttls", FromEmail: "noreply@example.com", FromName: "影策", RegistrationAllowedDomains: []string{"example.com"}})
+	settingJSON, err := json.Marshal(EmailSettingValue{Enabled: true, Host: "smtp.example.com", Port: 587, Encryption: "starttls", FromEmail: "noreply@example.com", FromName: "Canvas", RegistrationAllowedDomains: []string{"example.com"}})
 	if err != nil {
 		t.Fatal(err)
 	}

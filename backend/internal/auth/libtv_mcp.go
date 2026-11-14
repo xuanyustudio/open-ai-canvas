@@ -129,7 +129,7 @@ func (s *Service) openLibTVMCPSession(token string) (*libTVMCPSession, error) {
 	_, err := session.call("initialize", map[string]any{
 		"protocolVersion": libTVMCPProtocolVersion,
 		"capabilities":    map[string]any{},
-		"clientInfo":      map[string]any{"name": "yingce-libtv-import", "version": "1.0.0"},
+		"clientInfo":      map[string]any{"name": "canvas-libtv-import", "version": "1.0.0"},
 	})
 	if err != nil {
 		return nil, err

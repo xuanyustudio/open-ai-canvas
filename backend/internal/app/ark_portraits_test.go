@@ -420,13 +420,13 @@ func TestArkPlatformGroupGrantsControlVisibilityAndReferences(t *testing.T) {
 	admin := &model.User{ID: "admin", Role: model.UserRoleAdmin}
 	user := &model.User{ID: "user", Role: model.UserRoleUser}
 	other := &model.User{ID: "other", Role: model.UserRoleUser}
-	if _, err := s.AdminCreateArkGroup(ctx, user, AdminArkGroupCreateRequest{Kind: arkGroupKindIP, Name: "影策猫"}); err == nil {
+	if _, err := s.AdminCreateArkGroup(ctx, user, AdminArkGroupCreateRequest{Kind: arkGroupKindIP, Name: "Canvas 猫"}); err == nil {
 		t.Fatal("platform groups are admin only")
 	}
 	if _, err := s.AdminCreateArkGroup(ctx, admin, AdminArkGroupCreateRequest{Kind: arkGroupKindReal, Name: "签约演员"}); err == nil {
 		t.Fatal("real platform groups need H5 verification or an existing group id")
 	}
-	group, err := s.AdminCreateArkGroup(ctx, admin, AdminArkGroupCreateRequest{Kind: arkGroupKindIP, Name: "影策猫", GrantUserIDs: []string{"user"}})
+	group, err := s.AdminCreateArkGroup(ctx, admin, AdminArkGroupCreateRequest{Kind: arkGroupKindIP, Name: "Canvas 猫", GrantUserIDs: []string{"user"}})
 	if err != nil {
 		t.Fatal(err)
 	}

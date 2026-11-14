@@ -79,7 +79,7 @@ zip -X -q ../seedance-mini1.yingce-plugin manifest.json README.md docs/interface
   "id": "seedance-mini1",
   "name": "SeedanceMINI1",
   "version": "1.0.0",
-  "author": "影策",
+  "author": "Canvas",
   "description": "SeedanceMINI1 视频生成插件，支持参考图、清晰度增强与异步任务。",
   "permissions": [
     "generation.run",

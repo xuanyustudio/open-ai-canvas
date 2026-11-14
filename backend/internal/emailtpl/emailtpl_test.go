@@ -6,14 +6,14 @@ import (
 )
 
 func TestRenderCodeEscapesAndKeepsCopyableCode(t *testing.T) {
-	rendered, err := RenderCode(CodeEmail{Brand: "<b>影策</b>", Heading: "注册", Intro: "你正在注册", Code: "042517", Recipient: "a@example.com"})
+	rendered, err := RenderCode(CodeEmail{Brand: "<b>Canvas</b>", Heading: "注册", Intro: "你正在注册", Code: "042517", Recipient: "a@example.com"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !strings.HasPrefix(rendered.Subject, "042517 是你的") {
 		t.Fatalf("subject = %q", rendered.Subject)
 	}
-	if strings.Contains(rendered.HTML, "<b>影策</b>") || !strings.Contains(rendered.HTML, "&lt;b&gt;") {
+	if strings.Contains(rendered.HTML, "<b>Canvas</b>") || !strings.Contains(rendered.HTML, "&lt;b&gt;") {
 		t.Fatal("brand must be HTML-escaped")
 	}
 	if !strings.Contains(rendered.HTML, "user-select:all") || !strings.Contains(rendered.Text, "\n验证码：042517\n") {
@@ -30,7 +30,7 @@ func TestFormatCredits(t *testing.T) {
 }
 
 func TestRenderConsumptionReport(t *testing.T) {
-	report := ConsumptionReport{Brand: "影策", UserName: "小王", Date: "2026-11-06", WeekdayName: "星期五",
+	report := ConsumptionReport{Brand: "Canvas", UserName: "小王", Date: "2026-11-06", WeekdayName: "星期五",
 		TotalMicro: 120_000_000, ConsumeMicro: 130_000_000, RefundMicro: 10_000_000, OrderCount: 12, AvailableMicro: 900_000_000, PreviousDayMicro: 60_000_000,
 		Capabilities: []Slice{{Label: "视频生成", Micro: 100_000_000, Count: 4}, {Label: "图片生成", Micro: 30_000_000, Count: 8}},
 		Models:       []Slice{{Label: "Seedance", Micro: 100_000_000, Count: 4}},

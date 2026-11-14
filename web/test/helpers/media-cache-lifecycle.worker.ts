@@ -270,7 +270,7 @@ async function run(scenario: string) {
     } else if (scenario === "hook-lifecycle") {
         const { Window } = await import("happy-dom");
         const dom = new Window({ url: "http://localhost" });
-        dom.localStorage.setItem("yingce:active-user-scope", "owner");
+        dom.localStorage.setItem("canvas:active-user-scope", "owner");
         Object.defineProperty(globalThis, "window", { configurable: true, value: dom });
         Object.defineProperty(globalThis, "document", { configurable: true, value: dom.document });
         Object.defineProperty(globalThis, "navigator", { configurable: true, value: dom.navigator });

@@ -48,7 +48,7 @@ export type CanvasNodeAssetResult = {
 };
 
 const pendingAssetSyncs = new Map<string, Promise<CanvasNodeAssetResult>>();
-const projectAssetLinkQueueKey = "yingce:pending-canvas-project-asset-links";
+const projectAssetLinkQueueKey = "canvas:pending-canvas-project-asset-links";
 const projectAssetLinkRetryDelays = [2_000, 4_000, 8_000, 16_000, 30_000] as const;
 const projectAssetLinkQueues = new Map<string, ReturnType<typeof createCanvasProjectAssetLinkQueue>>();
 const projectAssetLinkFlights = new Map<string, Promise<{ linked: boolean; pending: boolean }>>();

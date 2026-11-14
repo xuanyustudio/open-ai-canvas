@@ -571,7 +571,7 @@ add({
 
 const newAPIVideoTasksMediaURLs = (path) => omit(map(sorted(ref(path)), "media", ref("media.value")));
 const newAPIVideoTasksParams = [
-  ["model", "string", true, "model", "上游模型 ID，按影策当前选用的模型发送，不写死网关示例名。"],
+  ["model", "string", true, "model", "上游模型 ID，按 Canvas 当前选用的模型发送，不写死网关示例名。"],
   ["prompt", "string", true, "prompt", "视频生成提示词。"],
   ["images", "media[]", false, "images", "参考图，发送为 data URI（最多 9 张）；空数组不发送。超预算时先压缩。"],
   ["videos", "media[]", false, "videos", "参考视频，发送为 data URI（最多 3 个）；空则省略。"],
@@ -584,7 +584,7 @@ const newAPIVideoTasksParams = [
 add({
   id: "newapi-video-tasks-v1", providerId: "newapi-video-tasks", name: "NewAPI Video Tasks（/v1/video/tasks 查询）", vendor: "NewAPI", capability: "video",
   baseUrl: "http://127.0.0.1:3000", auth: bearer, params: newAPIVideoTasksParams, requiresPublicMediaUrls: false,
-  notes: "该协议创建路径与 NewAPI Video Generations Channel 2 相同（POST /v1/video/generations），但查询走 GET /v1/video/tasks/{taskId}，适用于小力孩等使用该查询路径的网关。创建体对齐小力孩官方视频适配文档：只发送 model、prompt、aspect_ratio、ratio、seconds，以及非空时的 images/videos/audios；缺省画幅 9:16。参考素材发送为 data URI（宿主会读取本地资源或拉取 URL 后内嵌，超 80MB 原图预算时压缩图片），避免上游无法访问影策公网地址。不能与 newapi-channel-2 混用，也不能根据模型名猜测。",
+  notes: "该协议创建路径与 NewAPI Video Generations Channel 2 相同（POST /v1/video/generations），但查询走 GET /v1/video/tasks/{taskId}，适用于小力孩等使用该查询路径的网关。创建体对齐小力孩官方视频适配文档：只发送 model、prompt、aspect_ratio、ratio、seconds，以及非空时的 images/videos/audios；缺省画幅 9:16。参考素材发送为 data URI（宿主会读取本地资源或拉取 URL 后内嵌，超 80MB 原图预算时压缩图片），避免上游无法访问 Canvas 公网地址。不能与 newapi-channel-2 混用，也不能根据模型名猜测。",
   create: jsonCreate("/v1/video/generations", {
     model: ref("request.model"), prompt: ref("request.prompt"), seconds: { $toString: ref("request.duration") },
     aspect_ratio: coalesce(ref("request.aspectRatio"), "9:16"), ratio: coalesce(ref("request.aspectRatio"), "9:16"),
@@ -1213,9 +1213,9 @@ function manifestFor(spec) {
     id: spec.id,
     name: spec.name,
     version: "2.0.0",
-    author: `${spec.vendor} / 影策`,
+    author: `${spec.vendor} / Canvas`,
     description: `${spec.name} 独立请求协议插件。`,
-    documentation: `# ${spec.name}\n\n完整字段、映射、响应、鉴权和兼容边界见包内 README.md 与 docs/interface.md。\n\n## 影策运行时合同\n\n用户只操作统一的文本、图片或视频能力；插件负责把统一请求转换为 ${spec.name} 上游协议。`,
+    documentation: `# ${spec.name}\n\n完整字段、映射、响应、鉴权和兼容边界见包内 README.md 与 docs/interface.md。\n\n## Canvas 运行时合同\n\n用户只操作统一的文本、图片或视频能力；插件负责把统一请求转换为 ${spec.name} 上游协议。`,
     permissions: ["generation.run", "media.read"],
     configuration: spec.configuration || config(),
     contributes: {
