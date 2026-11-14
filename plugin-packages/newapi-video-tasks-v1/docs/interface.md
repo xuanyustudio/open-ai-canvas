@@ -129,7 +129,7 @@
             "type": "string",
             "required": true,
             "mapping": "model",
-            "description": "上游模型 ID，按 Canvas 当前选用的模型发送，不写死网关示例名。"
+            "description": "上游模型 ID，按Canvas当前选用的模型发送，不写死网关示例名。"
           },
           {
             "name": "prompt",

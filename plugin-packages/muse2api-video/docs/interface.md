@@ -100,7 +100,7 @@ curl "$MUSE2API_BASE_URL/v1/videos/task_xxx" \
             "type": "string",
             "required": true,
             "mapping": "model",
-            "description": "Canvas 渠道中的模型标识；当前上游请求样例不发送 model 字段。"
+            "description": "Canvas渠道中的模型标识；当前上游请求样例不发送 model 字段。"
           },
           {
             "name": "prompt",
