@@ -418,7 +418,7 @@ type aigcImplicitLabel struct {
 
 // AIGCPlatformPropagator 是写入成片 AIGC 标识的传播服务提供者（ContentPropagator）。
 // "yingce" 只是默认占位：部署方必须替换为自己登记的服务提供者名称或编码。
-const AIGCPlatformPropagator = "yingce"
+const AIGCPlatformPropagator = "canvas"
 
 const (
 	// aigcLabelGenerated 是 Label 取值“1：属于人工智能生成合成内容”。

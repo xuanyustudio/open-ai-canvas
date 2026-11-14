@@ -56,8 +56,8 @@ type PendingCanvasMutation = CanvasMutationBatchState & {
     createdAt: string;
 };
 const pendingCanvasMutations = new Map<string, PendingCanvasMutation>();
-const pendingCanvasMutationKey = "yingce:canvas-mutation-journal";
-const confirmedCanvasBaselineKey = "yingce:canvas-confirmed-baselines";
+const pendingCanvasMutationKey = "canvas:canvas-mutation-journal";
+const confirmedCanvasBaselineKey = "canvas:canvas-confirmed-baselines";
 const unbasedProjects = new Set<string>();
 let syncFirstQueuedAt = 0;
 let pendingJournalScope = "";
@@ -365,7 +365,7 @@ export async function loadCanvasProjectForEditing(id: string, options: { onLoad?
                 if (!baseline) {
                     if (incrementalSession && !verifiedProjects.has(id)) {
                         const storage = localForageStorageForScope(scope);
-                        const key = `yingce:canvas-unverified-recovery:${id}`;
+                        const key = `canvas:canvas-unverified-recovery:${id}`;
                         const raw = await storage.getItem(key);
                         const previous: unknown = raw ? JSON.parse(raw) : [];
                         const copies = Array.isArray(previous) ? previous : [];
@@ -374,7 +374,7 @@ export async function loadCanvasProjectForEditing(id: string, options: { onLoad?
                     merged = { ...rebaseCanvasLocalEdits(undefined, remote, local), remoteContentHash: hash };
                 } else if (!pendingCanvasMutations.get(id) && incrementalSession && !verifiedProjects.has(id) && !sameCanvasContent(baseline, remote) && baseline.remoteContentHash !== (await canvasContentHash(baseline))) {
                     const storage = localForageStorageForScope(scope);
-                    const key = `yingce:canvas-unverified-recovery:${id}`;
+                    const key = `canvas:canvas-unverified-recovery:${id}`;
                     const raw = await storage.getItem(key);
                     const previous: unknown = raw ? JSON.parse(raw) : [];
                     const copies = Array.isArray(previous) ? previous : [];
@@ -1378,7 +1378,7 @@ function canReconcileCanvasRejection(error: unknown) {
 
 async function preserveSyncRecovery(identity: string, value: object) {
     const scope = getActiveUserScope();
-    const key = `yingce:canvas-recovery:${identity}:${newCanvasMutationId()}`;
+    const key = `canvas:canvas-recovery:${identity}:${newCanvasMutationId()}`;
     rememberSyncRecovery(scope, key, value);
     const write = Promise.resolve().then(() => localForageStorageForScope(scope).setItem(key, JSON.stringify({ ...value, savedAt: new Date().toISOString() })));
     try {

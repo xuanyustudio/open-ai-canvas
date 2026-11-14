@@ -98,7 +98,7 @@ temperature、top_p、max_tokens 和原生 parameters 合并；parameters.result
   "id": "dashscope-qwen-native",
   "name": "DashScope Qwen Native",
   "version": "2.0.1",
-  "author": "Alibaba Cloud / 影策",
+  "author": "Alibaba Cloud / Canvas",
   "description": "DashScope Qwen Native 独立请求协议插件。",
   "documentation": "<当前插件的完整 documentation，由 README.md 与 docs/interface.md 拼接而成；为避免 JSON 递归，此处不重复展开正文。>",
   "permissions": [

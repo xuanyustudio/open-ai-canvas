@@ -47,7 +47,7 @@ export type ResolvedCanvasAppearance = {
 export const DEFAULT_CANVAS_BACKGROUND_MODE: CanvasBackgroundMode = "dots";
 export const NEW_CANVAS_BACKGROUND_MODE: CanvasBackgroundMode = "dots";
 
-const CANVAS_APPEARANCE_DEFAULT_KEY = "yingce:canvas-appearance-default";
+const CANVAS_APPEARANCE_DEFAULT_KEY = "canvas:canvas-appearance-default";
 const HEX_COLOR_PATTERN = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i;
 const CUSTOM_GRID_COLOR: Record<CanvasColorTheme, string> = { light: "#000000", dark: "#FFFFFF" };
 const CUSTOM_GRID_OPACITY: Record<CanvasColorTheme, number> = { light: 80, dark: 32 };

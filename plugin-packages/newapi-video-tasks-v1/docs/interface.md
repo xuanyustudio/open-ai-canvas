@@ -20,7 +20,7 @@
 
 | 统一字段 | 类型 | 必填 | 上游映射 | 说明 |
 | --- | --- | --- | --- | --- |
-| `model` | string | 是 | `model` | 上游模型 ID，按影策当前选用的模型发送，不写死网关示例名。 |
+| `model` | string | 是 | `model` | 上游模型 ID，按 Canvas 当前选用的模型发送，不写死网关示例名。 |
 | `prompt` | string | 是 | `prompt` | 视频生成提示词。 |
 | `images` | media[] | 否 | `images` | 参考图，发送为 data URI（最多 9 张）；空数组不发送。超预算时先压缩。 |
 | `videos` | media[] | 否 | `videos` | 参考视频，发送为 data URI（最多 3 个）；空则省略。 |
@@ -72,7 +72,7 @@
 
 ## 兼容边界
 
-该协议创建路径与 NewAPI Video Generations Channel 2 相同（POST /v1/video/generations），但查询走 GET /v1/video/tasks/{taskId}，适用于小力孩等使用该查询路径的网关。创建体对齐小力孩官方视频适配文档：只发送 model、prompt、aspect_ratio、ratio、seconds，以及非空时的 images/videos/audios；缺省画幅 9:16。参考素材发送为 data URI（宿主会读取本地资源或拉取 URL 后内嵌，超 80MB 原图预算时压缩图片），避免上游无法访问影策公网地址。不能与 newapi-channel-2 混用，也不能根据模型名猜测。
+该协议创建路径与 NewAPI Video Generations Channel 2 相同（POST /v1/video/generations），但查询走 GET /v1/video/tasks/{taskId}，适用于小力孩等使用该查询路径的网关。创建体对齐小力孩官方视频适配文档：只发送 model、prompt、aspect_ratio、ratio、seconds，以及非空时的 images/videos/audios；缺省画幅 9:16。参考素材发送为 data URI（宿主会读取本地资源或拉取 URL 后内嵌，超 80MB 原图预算时压缩图片），避免上游无法访问 Canvas 公网地址。不能与 newapi-channel-2 混用，也不能根据模型名猜测。
 
 <!-- YINGCE_MANIFEST_CONTRACT_START -->
 ## Manifest 完整接口定义
@@ -85,7 +85,7 @@
   "id": "newapi-video-tasks-v1",
   "name": "NewAPI Video Tasks（/v1/video/tasks 查询）",
   "version": "2.0.0",
-  "author": "NewAPI / 影策",
+  "author": "NewAPI / Canvas",
   "description": "NewAPI Video Tasks（/v1/video/tasks 查询） 独立请求协议插件。",
   "documentation": "<当前插件的完整 documentation，由 README.md 与 docs/interface.md 拼接而成；为避免 JSON 递归，此处不重复展开正文。>",
   "permissions": [
@@ -129,7 +129,7 @@
             "type": "string",
             "required": true,
             "mapping": "model",
-            "description": "上游模型 ID，按影策当前选用的模型发送，不写死网关示例名。"
+            "description": "上游模型 ID，按 Canvas 当前选用的模型发送，不写死网关示例名。"
           },
           {
             "name": "prompt",

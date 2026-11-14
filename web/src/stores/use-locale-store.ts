@@ -17,7 +17,7 @@ export const useLocaleStore = create<LocaleStore>()(
             setLocale: (next) => set((state) => (isAppLocale(next) ? { locale: next } : state)),
         }),
         {
-            name: "yingce:locale",
+            name: "canvas:locale",
             merge: (persisted, current) => {
                 const stored = (persisted || {}) as Partial<LocaleStore>;
                 return { ...current, locale: isAppLocale(stored.locale) ? stored.locale : current.locale };

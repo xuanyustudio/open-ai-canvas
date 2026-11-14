@@ -24,7 +24,7 @@ export type UploadedImage = {
     remoteUploadError?: string;
 };
 
-const store = localforage.createInstance({ name: "yingce", storeName: "image_files" });
+const store = localforage.createInstance({ name: "canvas", storeName: "image_files" });
 
 export async function uploadImage(input: string | Blob, onProgress?: (uploadedBytes: number, totalBytes: number) => void, knownSize?: { width: number; height: number }): Promise<UploadedImage> {
     // 同一个逻辑上传在直传失败后会退回 IndexedDB，并由云端数据同步再次提交。

@@ -59,7 +59,7 @@ function installStorage() {
         configurable: true,
         value: {
             localStorage: {
-                getItem: (key: string) => (key === "yingce:active-user-scope" ? scope : null),
+                getItem: (key: string) => (key === "canvas:active-user-scope" ? scope : null),
                 setItem: () => undefined,
                 removeItem: () => undefined,
             },

@@ -20,7 +20,7 @@ export const useCanvasPromptPreferencesStore = create<CanvasPromptPreferences>()
             setFontSize: (fontSize) => set({ fontSize: normalizeCanvasPromptFontSize(fontSize) }),
         }),
         {
-            name: "yingce:canvas-prompt-preferences",
+            name: "canvas:canvas-prompt-preferences",
             partialize: ({ fontSize }) => ({ fontSize }),
             merge: (persisted, current) => ({
                 ...current,

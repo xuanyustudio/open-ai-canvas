@@ -3,8 +3,8 @@ name: 影视剧作工坊
 description: 影视剧本、视觉开发、分镜与提示词制作知识包；按用户目标读取对应模块文档，以人工核对方式完成文本交付。
 metadata:
   version: "1.1.6"
-  author: 影策
-  owner: yingce-system
+  author: Canvas
+  owner: canvas-system
   skillId: "yingshi-drama-workshop"
   tag: drama
   sortWeight: 1000

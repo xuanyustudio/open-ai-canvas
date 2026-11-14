@@ -157,7 +157,7 @@ export function bulkPoseLibraryItems(input: { action: PoseLibraryBulkAction; ids
 }
 
 export type PoseLibraryPackPreview = {
-    format: "ai-pose-gallery-zh" | "yingce-pose-library";
+    format: "ai-pose-gallery-zh" | "canvas-pose-library" | "yingce-pose-library";
     sourceName: string;
     baseUrl: string;
     total: number;
@@ -183,10 +183,10 @@ export function previewPoseLibraryPack(text: string): PoseLibraryPackPreview {
         return { format: "ai-pose-gallery-zh", sourceName: "AI 姿势参考图库（ai-pose-gallery-zh）", baseUrl: POSE_LIBRARY_DEFAULT_BASE_URL, total: rows.length, systems: count(rows.map((row) => String(row["体系"] || "").trim())) };
     }
     const pack = data as { format?: unknown; source?: { name?: unknown; key?: unknown; baseUrl?: unknown }; items?: unknown };
-    if (pack && pack.format === "yingce-pose-library" && Array.isArray(pack.items)) {
+    if (pack && (pack.format === "canvas-pose-library" || pack.format === "yingce-pose-library") && Array.isArray(pack.items)) {
         const items = pack.items as Record<string, unknown>[];
         return {
-            format: "yingce-pose-library",
+            format: "canvas-pose-library",
             sourceName: String(pack.source?.name || pack.source?.key || "自定义姿势包"),
             baseUrl: typeof pack.source?.baseUrl === "string" ? pack.source.baseUrl : "",
             total: items.length,

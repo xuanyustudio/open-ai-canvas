@@ -80,7 +80,7 @@
   "id": "antigravity-proxy",
   "name": "Antigravity Proxy",
   "version": "1.0.0",
-  "author": "Yingce",
+  "author": "Canvas",
   "description": "Antigravity 中转渠道插件：OpenAI 兼容对话（gemini-3.8-flash-high / gemini-pro-agent）。",
   "permissions": [
     "generation.run",
