@@ -68,6 +68,20 @@ func TestAllowedOriginUsesForwardedHost(t *testing.T) {
 	}
 }
 
+func TestAllowedOriginRequiresForwardedPortForNonDefaultOrigin(t *testing.T) {
+	t.Setenv("CANVAS_CORS_ORIGINS", "")
+	context, _ := gin.CreateTestContext(httptest.NewRecorder())
+	context.Request = httptest.NewRequest("POST", "http://backend/api/dramas/demo/asset-package", nil)
+	context.Request.Header.Set("X-Forwarded-Host", "85.137.240.113:3080")
+	if !allowedOrigin(context, "http://85.137.240.113:3080") {
+		t.Fatal("forwarded host with non-default port should match the browser Origin")
+	}
+	context.Request.Header.Set("X-Forwarded-Host", "85.137.240.113")
+	if allowedOrigin(context, "http://85.137.240.113:3080") {
+		t.Fatal("host without port must not match an Origin that includes a non-default port")
+	}
+}
+
 func TestParseCORSPolicyNormalizesConfiguredOrigins(t *testing.T) {
 	policy, err := parseCORSPolicy(" https://Canvas.example.com/ , http://localhost:3000 ")
 	if err != nil {

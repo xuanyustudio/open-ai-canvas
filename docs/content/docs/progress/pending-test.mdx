@@ -5,6 +5,13 @@ description: 当前项目已实现功能的手工验证清单与未确认边界
 
 # 待测试
 
+## 非标准端口下资产打包 CORS 403
+
+- 已修复：生产 nginx 将 `Host` / `X-Forwarded-Host` 改为 `$http_host`，保留 `:3080` 等非默认端口，后端同源 CORS 才能匹配浏览器 `Origin`。旧镜像仍可用 `CANVAS_CORS_ORIGINS=http://<主机>:<端口>` 临时放行。
+- 本地验证：`go test ./cmd/server -run 'AllowedOriginRequiresForwardedPort|AllowedOriginUsesForwardedHost'`。
+- [ ] 真实部署：用 `http://IP:非默认端口` 打开站点，登录后执行「一键打包全部资产」，确认不再出现 `不允许的跨域来源`；同时抽查普通保存/生成 POST 仍正常。
+- [ ] 未升级 web 镜像前，仅改 `.env` 的 `CANVAS_CORS_ORIGINS` 为完整 Origin 并重启 backend，确认同样可打包。
+
 ## 短剧段视频卡在「生成视频中」
 
 - 已修复：段版本在作业进行中被抬高时，失败/成功回写按旧 revision CAS 会落空，段的 `videoStatus` 仍停在 `running`，页面永久显示「生成视频中」且不能点重新生成。现在失败回写与成功作废都会清掉 busy；调度会对无运行中作业的孤儿 busy 段落成失败；暂停作品若仍有这类段也会回到调度；「重试失败」和「重新生成」会先对账再继续。前端在作业已终态时不再把段当成生成中。
