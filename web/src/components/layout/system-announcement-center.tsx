@@ -12,8 +12,8 @@ const AnnouncementTimelineModal = lazy(() => import("@/components/ui/aceternity/
 
 const ANNOUNCEMENT_REFRESH_INTERVAL_MS = 5 * 60_000;
 const ANNOUNCEMENT_CACHE_TTL_MS = 60_000;
-const ANNOUNCEMENT_DISMISS_TODAY_PREFIX = "yingce.announcements.dismiss-today";
-const ANNOUNCEMENT_DISMISS_SESSION_PREFIX = "yingce.announcements.dismiss-session";
+const ANNOUNCEMENT_DISMISS_TODAY_PREFIX = "canvas.announcements.dismiss-today";
+const ANNOUNCEMENT_DISMISS_SESSION_PREFIX = "canvas.announcements.dismiss-session";
 
 type AnnouncementFeed = Awaited<ReturnType<typeof getAnnouncementFeed>>;
 
@@ -65,7 +65,7 @@ export function SystemAnnouncementCenter({ userId, className, style, showLabel =
         try {
             const result = await markAnnouncementsRead(feed.announcements.map((announcement) => announcement.id));
             const nextUnreadCount = Math.max(0, result.unreadCount || 0);
-            queryClient.setQueryData<AnnouncementFeed>(queryKey, (current) => current ? { ...current, unreadCount: nextUnreadCount } : current);
+            queryClient.setQueryData<AnnouncementFeed>(queryKey, (current) => (current ? { ...current, unreadCount: nextUnreadCount } : current));
             if (nextUnreadCount > 0) void queryClient.invalidateQueries({ queryKey });
         } catch {
             // 已读状态是辅助读路径，失败时保留角标，下一次打开或轮询会继续尝试同步。
@@ -111,7 +111,9 @@ export function SystemAnnouncementCenter({ userId, className, style, showLabel =
                 {showLabel ? (
                     <span className={`min-w-0 flex-1 items-center justify-between gap-2 whitespace-nowrap ${labelClassName || ""}`}>
                         <span>{t("account.layout.announcements.title")}</span>
-                        <Tag color={unreadCount > 0 ? "gold" : undefined} className="!m-0 !min-w-6 !px-2 !text-center !text-[var(--fs-micro)] !font-medium !leading-[18px] tabular-nums">{announcements.length}</Tag>
+                        <Tag color={unreadCount > 0 ? "gold" : undefined} className="!m-0 !min-w-6 !px-2 !text-center !text-[var(--fs-micro)] !font-medium !leading-[18px] tabular-nums">
+                            {announcements.length}
+                        </Tag>
                     </span>
                 ) : null}
             </button>
@@ -145,7 +147,7 @@ function announcementAutoPromptSuppressed(userId: string, fingerprint: string) {
     if (hasAnnouncementDismissalSession(userId, fingerprint)) return true;
     try {
         const value = localStorage.getItem(`${ANNOUNCEMENT_DISMISS_TODAY_PREFIX}.${userId}`);
-        const parsed = value ? JSON.parse(value) as { date?: string; fingerprint?: string } : null;
+        const parsed = value ? (JSON.parse(value) as { date?: string; fingerprint?: string }) : null;
         return parsed?.date === localDateKey() && parsed.fingerprint === fingerprint;
     } catch {
         return false;

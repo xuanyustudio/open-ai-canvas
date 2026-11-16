@@ -196,7 +196,7 @@ func (s *Service) SendProfileEmailCode(ctx context.Context, actor *model.User, c
 		}
 		return nil, err
 	}
-	rendered, err := codeMail(emailtpl.CodeEmail{Brand: setting.FromName, Heading: "更换邮箱", Intro: "你正在把" + setting.FromName + "账号的邮箱更换为 " + email + "。请在账号设置页输入下方验证码完成验证。", Code: code, TTLMinutes: 10, Recipient: email})
+	rendered, err := codeMail(emailtpl.CodeEmail{Brand: setting.FromName, Heading: "更换邮箱", Intro: kernel.BrandPrefix("你正在把", kernel.BrandJoin(setting.FromName, "账号的邮箱更换为")) + " " + email + "。请在账号设置页输入下方验证码完成验证。", Code: code, TTLMinutes: 10, Recipient: email})
 	if err != nil {
 		return nil, err
 	}

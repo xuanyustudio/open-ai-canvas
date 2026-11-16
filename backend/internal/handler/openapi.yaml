@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: 影策 HTTP API
+  title: Canvas HTTP API
   version: "1.0.0"
   description: |
     路径前缀是 `/api`。前后端一起发布，不按路径做 API 版本。
@@ -1129,7 +1129,7 @@ paths:
   /admin/pose-library/import:
     post:
       tags: [pose-library, admin]
-      summary: 导入 ai-pose-gallery-zh 的 pose-zh.json 或 yingce-pose-library 姿势包（管理员）
+      summary: 导入 ai-pose-gallery-zh 的 pose-zh.json 或 canvas-pose-library 姿势包（管理员）
       requestBody:
         required: true
         content:

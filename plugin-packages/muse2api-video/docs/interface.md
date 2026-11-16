@@ -12,9 +12,9 @@
 
 ## 参数映射
 
-| 影策参数 | 必填 | 上游字段 | 说明 |
+| Canvas 参数 | 必填 | 上游字段 | 说明 |
 | --- | --- | --- | --- |
-| `model` | 是 | 不发送 | 影策渠道的模型标识；所给上游请求样例没有 `model` 字段。 |
+| `model` | 是 | 不发送 | Canvas 渠道的模型标识；所给上游请求样例没有 `model` 字段。 |
 | `prompt` | 是 | `prompt` | 顶层字符串字段，不放入 `input` 或 `parameters`。 |
 | `duration` | 是 | `duration` | 正整数秒。 |
 | `aspectRatio` | 是 | `size` | 例如 `16:9`。 |
@@ -58,7 +58,7 @@ curl "$MUSE2API_BASE_URL/v1/videos/task_xxx" \
   "id": "muse2api-video",
   "name": "MUSE2API Async Video",
   "version": "1.0.0",
-  "author": "影策",
+  "author": "Canvas",
   "description": "适配 MUSE2API 的 JSON 异步视频生成接口。",
   "permissions": [
     "generation.run",
@@ -100,7 +100,7 @@ curl "$MUSE2API_BASE_URL/v1/videos/task_xxx" \
             "type": "string",
             "required": true,
             "mapping": "model",
-            "description": "影策渠道中的模型标识；当前上游请求样例不发送 model 字段。"
+            "description": "Canvas渠道中的模型标识；当前上游请求样例不发送 model 字段。"
           },
           {
             "name": "prompt",

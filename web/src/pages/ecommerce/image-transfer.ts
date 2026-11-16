@@ -2,7 +2,7 @@ import { getActiveUserScope } from "@/lib/user-scope";
 import { importResourceFromUrl, refreshResource, resourceFileUrl, uploadResourceFile, type RemoteResource } from "@/services/api/resources";
 import type { EcommerceReference, EcommerceReferenceRole } from "@/services/api/ecommerce";
 
-export const COMMERCE_IMAGE_RESOURCE_DND_TYPE = "application/x-yingce-image-resource";
+export const COMMERCE_IMAGE_RESOURCE_DND_TYPE = "application/x-canvas-image-resource";
 export const COMMERCE_IMAGE_ACCEPT = "image/png,image/jpeg,image/webp,image/gif,image/avif,image/bmp";
 const maxImageBytes = 30 * 1024 * 1024;
 const imageMime = /^image\/(?:png|jpeg|webp|gif|avif|bmp)$/i;

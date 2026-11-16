@@ -27,7 +27,7 @@ const monitorSessions = new WeakMap<Window, () => void>();
 
 export function openPrevisMonitorWindow(input: { brandName: string; renderFrame: () => PrevisMonitorFrame | null; onClosed: () => void; fps?: number }): PrevisMonitorHandle {
     // 同步打开：保住用户激活，避免被弹窗拦截。
-    const popup = window.open("", "yingce-previs-monitor", "popup=yes,width=960,height=600");
+    const popup = window.open("", "canvas-previs-monitor", "popup=yes,width=960,height=600");
     if (!popup) throw new Error(translate("canvasC.previsMonitor.popupBlocked"));
     const monitor: Window = popup;
     monitorSessions.get(monitor)?.();

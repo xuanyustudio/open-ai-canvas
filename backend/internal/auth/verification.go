@@ -194,7 +194,7 @@ func (s *Service) StartVerification(ctx context.Context, actor *model.User, req 
 			return nil, err
 		}
 		setting = resolveEmailSender(setting, s.host.BrandName())
-		rendered, err := codeMail(emailtpl.CodeEmail{Brand: setting.FromName, Heading: verificationHeading(req.Purpose), Intro: "你正在" + setting.FromName + "进行" + verificationHeading(req.Purpose) + "。请在页面中输入下方验证码完成身份验证。", Code: emailCode, TTLMinutes: 10, Recipient: email})
+		rendered, err := codeMail(emailtpl.CodeEmail{Brand: setting.FromName, Heading: verificationHeading(req.Purpose), Intro: kernel.BrandPrefix("你正在", kernel.BrandJoin(setting.FromName, "进行"+verificationHeading(req.Purpose))) + "。请在页面中输入下方验证码完成身份验证。", Code: emailCode, TTLMinutes: 10, Recipient: email})
 		if err != nil {
 			return nil, err
 		}

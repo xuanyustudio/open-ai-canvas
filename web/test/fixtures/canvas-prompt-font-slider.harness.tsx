@@ -56,7 +56,7 @@ test("font slider stays inside panel and blocks canvas close/drag events", async
         await act(async () => store.getState().setFontSize(22));
         expect(input.value).toBe("20");
         expect(host.textContent).toContain("20px");
-        expect(JSON.parse(window.localStorage.getItem("yingce:canvas-prompt-preferences")!).state.fontSize).toBe(20);
+        expect(JSON.parse(window.localStorage.getItem("canvas:canvas-prompt-preferences")!).state.fontSize).toBe(20);
     } finally {
         await act(async () => root.unmount());
         host.remove();

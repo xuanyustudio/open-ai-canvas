@@ -94,7 +94,7 @@ AWS ImageBlock 格式为 png/jpeg/gif/webp；AudioBlock 为 mp3/opus/wav/aac/fla
   "id": "aws-bedrock-converse",
   "name": "AWS Bedrock Converse",
   "version": "2.0.1",
-  "author": "AWS / 影策",
+  "author": "AWS / Canvas",
   "description": "AWS Bedrock Converse 独立请求协议插件。",
   "documentation": "<当前插件的完整 documentation，由 README.md 与 docs/interface.md 拼接而成；为避免 JSON 递归，此处不重复展开正文。>",
   "permissions": [

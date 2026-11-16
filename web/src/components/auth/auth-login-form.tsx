@@ -133,7 +133,7 @@ export function AuthLoginForm({ settings, settingsFailed, onReloadSettings, next
             throw error;
         }
         clearReferralCode();
-        if (!settings?.firstUser) window.sessionStorage.setItem("yingce:model-setup-guide", "1");
+        if (!settings?.firstUser) window.sessionStorage.setItem("canvas:model-setup-guide", "1");
         await finish(settings?.firstUser ? t("auth.register.adminCreated") : t("auth.register.success"));
     };
 

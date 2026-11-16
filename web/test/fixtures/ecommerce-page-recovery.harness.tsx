@@ -490,7 +490,7 @@ describe("真实电商页面生命周期", () => {
                 const transfer = {
                     files: [new File(["thumbnail"], "preview.png", { type: "image/png" })],
                     items: [],
-                    types: ["Files", "application/x-yingce-image-resource"],
+                    types: ["Files", "application/x-canvas-image-resource"],
                     getData: (type: string) => data[type] || "",
                     setData: (type: string, value: string) => {
                         data[type] = value;
@@ -500,8 +500,8 @@ describe("真实电商页面生命周期", () => {
                     const start = new Event("dragstart", { bubbles: true });
                     Object.defineProperty(start, "dataTransfer", { value: transfer });
                     host.querySelector(".commerce-request-references img")!.dispatchEvent(start);
-                    expect(JSON.parse(data["application/x-yingce-image-resource"]).resourceId).toBe("owned-product");
-                } else transfer.setData("application/x-yingce-image-resource", JSON.stringify({ resourceId: id }));
+                    expect(JSON.parse(data["application/x-canvas-image-resource"]).resourceId).toBe("owned-product");
+                } else transfer.setData("application/x-canvas-image-resource", JSON.stringify({ resourceId: id }));
                 const event = new Event("drop", { bubbles: true, cancelable: true });
                 Object.defineProperty(event, "dataTransfer", { value: transfer });
                 host.querySelector(".ecs-prompt textarea")!.dispatchEvent(event);

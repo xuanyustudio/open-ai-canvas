@@ -30,7 +30,7 @@ func newConsumptionReportTestService(t *testing.T) (*Service, *gorm.DB, *[]repor
 	if err := db.AutoMigrate(&model.User{}, &model.SystemSetting{}, &model.CreditAccount{}, &model.CreditLedgerEntry{}, &model.BillingOrder{}, &model.EmailLog{}, &model.UserNotificationSetting{}); err != nil {
 		t.Fatal(err)
 	}
-	encoded, _ := json.Marshal(auth.EmailSettingValue{Enabled: true, Host: "smtp.example.com", Port: 587, Encryption: "starttls", FromEmail: "noreply@example.com", FromName: "影策"})
+	encoded, _ := json.Marshal(auth.EmailSettingValue{Enabled: true, Host: "smtp.example.com", Port: 587, Encryption: "starttls", FromEmail: "noreply@example.com", FromName: "Canvas"})
 	if err := db.Create(&model.SystemSetting{Key: "email", ValueJSON: string(encoded)}).Error; err != nil {
 		t.Fatal(err)
 	}

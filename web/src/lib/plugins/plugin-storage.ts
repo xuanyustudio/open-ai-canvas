@@ -1,7 +1,7 @@
 import { localForageStorageForScope } from "@/lib/localforage-storage";
 import type { PluginStorage } from "./plugin-types";
 
-const PLUGIN_STORAGE_PREFIX = "yingce:plugin-storage:";
+const PLUGIN_STORAGE_PREFIX = "canvas:plugin-storage:";
 
 export function pluginStorageFor(pluginId: string): PluginStorage {
     const storage = localForageStorageForScope();
@@ -24,6 +24,8 @@ export function pluginStorageFor(pluginId: string): PluginStorage {
             }
             await storage.setItem(keyFor(key), serialized);
         },
-        remove: async (key) => { await storage.removeItem(keyFor(key)); },
+        remove: async (key) => {
+            await storage.removeItem(keyFor(key));
+        },
     };
 }

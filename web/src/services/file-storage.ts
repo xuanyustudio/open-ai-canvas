@@ -27,7 +27,7 @@ export type UploadedFile = {
     remoteUploadError?: string;
 };
 
-const store = localforage.createInstance({ name: "yingce", storeName: "media_files" });
+const store = localforage.createInstance({ name: "canvas", storeName: "media_files" });
 
 export async function uploadMediaFile(input: Blob, prefix = "file", onProgress?: (uploadedBytes: number, totalBytes: number) => void): Promise<UploadedFile> {
     // 直传和失败后的本地同步必须复用同一上传身份，避免响应丢失后创建第二个对象。

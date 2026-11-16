@@ -9,7 +9,7 @@ import { setImageBlob } from "@/services/image-storage";
 import type { Asset } from "@/stores/use-asset-store";
 import type { CanvasExportAsset } from "@/types/canvas-export";
 
-type AssetExportFile = { app: "yingce"; version: 1; exportedAt: string; assets: Asset[]; files: CanvasExportAsset[] };
+type AssetExportFile = { app: "canvas"; version: 1; exportedAt: string; assets: Asset[]; files: CanvasExportAsset[] };
 
 export async function exportAssets(assets: Asset[]): Promise<void> {
     const media = assets.filter((asset) => ["image", "video", "audio", "model"].includes(asset.kind));
@@ -21,7 +21,7 @@ export async function exportAssets(assets: Asset[]): Promise<void> {
         if (asset.kind === "image") images.add(asset.data.storageKey);
     }
     const archive = new MediaPackage();
-    const manifest: AssetExportFile = { app: "yingce", version: 1, assets, exportedAt: new Date().toISOString(), files: await archive.collect(keys, "files", images) };
+    const manifest: AssetExportFile = { app: "canvas", version: 1, assets, exportedAt: new Date().toISOString(), files: await archive.collect(keys, "files", images) };
     saveAs(await archive.finish("assets.json", manifest), translate("library.assets.transfer.fileName"));
 }
 
@@ -34,7 +34,7 @@ export async function readAssetPackage(file: File): Promise<Asset[]> {
         !manifest ||
         typeof manifest !== "object" ||
         !("app" in manifest) ||
-        manifest.app !== "yingce" ||
+        (manifest.app !== "canvas" && manifest.app !== "yingce") ||
         !("version" in manifest) ||
         manifest.version !== 1 ||
         !("assets" in manifest) ||

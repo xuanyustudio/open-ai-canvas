@@ -4,7 +4,7 @@ import type { StateStorage } from "zustand/middleware";
 import { isUserScopedPersistenceSuppressed, scopedStorageKey } from "@/lib/user-scope";
 
 localforage.config({
-    name: "yingce",
+    name: "canvas",
     storeName: "app_state",
 });
 

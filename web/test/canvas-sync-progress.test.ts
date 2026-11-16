@@ -179,7 +179,7 @@ function live(): CanvasProject {
 function edit(patch: Partial<CanvasProject>) {
     useCanvasStore.setState({ projects: [{ ...live(), ...patch }] });
 }
-const journalKey = "yingce:canvas-mutation-journal";
+const journalKey = "canvas:canvas-mutation-journal";
 const journal = () => JSON.parse(fixture.data.get(journalKey) ?? "[]");
 
 async function twoDevices() {
@@ -496,7 +496,7 @@ describe("定向保存与旧 journal 的真实同步集成", () => {
         await sync.saveRemoteUserDataNow("canvas");
         expect(useAssetStore.getState().assets[0].title).toBe("Cloud title");
         expect(fixture.remote.title).toBe("Canvas edit");
-        expect([...fixture.data.keys()].some((key) => key.startsWith("yingce:canvas-recovery:asset:asset:"))).toBe(true);
+        expect([...fixture.data.keys()].some((key) => key.startsWith("canvas:canvas-recovery:asset:asset:"))).toBe(true);
     });
 
     test("本地保存失败时 Agent 不用旧云端画布冒充当前编辑，保存预检如实失败", async () => {
@@ -633,7 +633,7 @@ describe("定向保存与旧 journal 的真实同步集成", () => {
         expect(fixture.remote.title).toBe("Local draft");
         expect(journal()).toEqual([]);
         expect(fixture.writes).toHaveLength(2);
-        expect([...fixture.data.keys()].some((key) => key.startsWith("yingce:canvas-recovery:canvas:"))).toBe(false);
+        expect([...fixture.data.keys()].some((key) => key.startsWith("canvas:canvas-recovery:canvas:"))).toBe(false);
         expect(useSyncProgressStore.getState().syncingProjects.canvas.phase).toBe("done");
         edit({ title: "Next edit" });
         await sync.saveRemoteUserDataNow("canvas");
@@ -659,7 +659,7 @@ describe("定向保存与旧 journal 的真实同步集成", () => {
         edit({ title: "Old account draft" });
         fixture.errors.set("canvas:1", new ApiError("conflict", { status: 409, reason: "canvas_field_conflict" }));
         fixture.saveHook = (key: string) => {
-            if (key !== "yingce:canvas-confirmed-baselines") return;
+            if (key !== "canvas:canvas-confirmed-baselines") return;
             sync.resetRemoteUserDataSync();
             fixture.scope = "another-account";
             edit({ title: "New account canvas" });
@@ -675,7 +675,7 @@ describe("定向保存与旧 journal 的真实同步集成", () => {
         edit({ title: "Local draft" });
         fixture.errors.set("canvas:1", new ApiError("conflict", { status: 409, reason: "canvas_field_conflict" }));
         fixture.saveHook = (key: string) => {
-            if (key.startsWith("yingce:canvas-recovery:")) throw new Error("backup unavailable");
+            if (key.startsWith("canvas:canvas-recovery:")) throw new Error("backup unavailable");
         };
         await sync.saveRemoteUserDataNow("canvas");
         expect(live().title).toBe("Local draft");
@@ -700,7 +700,7 @@ describe("定向保存与旧 journal 的真实同步集成", () => {
         await sync.saveRemoteUserDataNow("canvas");
         expect(fixture.writes).toHaveLength(0);
         expect(fixture.remote.nodes).toHaveLength(1);
-        const recovery = JSON.parse(fixture.data.get("yingce:canvas-unverified-recovery:canvas"));
+        const recovery = JSON.parse(fixture.data.get("canvas:canvas-unverified-recovery:canvas"));
         expect(recovery.at(-1).project.nodes).toEqual([]);
     });
 
@@ -1318,7 +1318,7 @@ describe("画布云端同步状态收尾", () => {
         sync.resetRemoteUserDataSync();
         const prepared = { ...base(), title: "Queued edit" };
         fixture.data.set(
-            "yingce:canvas-mutation-journal",
+            "canvas:canvas-mutation-journal",
             JSON.stringify([
                 { projectId: "canvas", request: { mutationId: "pending-mutation", baseRevision: 7, operations: [{ type: "set_field", field: "title", value: prepared.title, beforeValue: "Canvas" }] }, baseline: base(), prepared, createdAt: "2026-01-01" },
             ]),
@@ -1331,7 +1331,7 @@ describe("画布云端同步状态收尾", () => {
         expect(fixture.remote.title).toBe(title);
         expect(fixture.writes).toHaveLength(newerEdit ? 2 : 1);
         expect(fixture.writes[0].mutationId).toBe("pending-mutation");
-        expect(fixture.data.has("yingce:canvas-mutation-journal")).toBe(false);
+        expect(fixture.data.has("canvas:canvas-mutation-journal")).toBe(false);
         expect(useSyncProgressStore.getState().syncingProjects.canvas.phase).toBe("done");
     });
 });

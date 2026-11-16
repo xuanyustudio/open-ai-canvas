@@ -5,8 +5,8 @@ import { defaultPriceTier, defaultTokenPriceRule } from "./channel-model-price-t
 
 export type PricingSnapshot = Pick<ChannelModelFormValues, "priceTiers" | "priceCurrency" | "referenceVideoBilling">;
 export type SavedPricingTemplate = { id: string; revision: string; name: string; capability: ChannelModelFormValues["capability"]; pricing: PricingSnapshot };
-export const PRICING_TEMPLATES_CHANGED = "yingce:pricing-templates-changed";
-export const pricingTemplatesKey = (scope: string) => scopedStorageKey("yingce:pricing-templates", scope);
+export const PRICING_TEMPLATES_CHANGED = "canvas:pricing-templates-changed";
+export const pricingTemplatesKey = (scope: string) => scopedStorageKey("canvas:pricing-templates", scope);
 const MAX_STORAGE = 256_000;
 
 function object(value: unknown): Record<string, unknown> {

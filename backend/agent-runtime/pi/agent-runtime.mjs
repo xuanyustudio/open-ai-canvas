@@ -114,7 +114,7 @@ async function run() {
     modelsPath: join(isolatedDir, "models.json"),
   });
   modelRuntime.registerProvider(providerID, {
-    name: "影策模型任务",
+    name: "Canvas 模型任务",
     baseUrl: "http://agent-runtime.invalid/v1",
     apiKey: "managed-by-go-bridge",
     api,

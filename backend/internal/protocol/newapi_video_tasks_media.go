@@ -45,14 +45,14 @@ var (
 )
 
 // NewAPIVideoTasksLocalLoader optionally resolves a media reference to raw
-// bytes and MIME type, typically by reading a local Yingce resource file.
+// bytes and MIME type, typically by reading a local Canvas resource file.
 // Return (nil, "", nil) to fall through to HTTP GET. Never log secrets or
 // signed query strings.
 var NewAPIVideoTasksLocalLoader func(ctx context.Context, media MediaReference) (data []byte, mimeType string, err error)
 
 // PrepareNewAPIVideoTasksMedia rewrites images/videos/audios into data URIs
 // for the 小力孩 Video Tasks adapter. Public http(s) URLs are not left in the
-// request because MiniMax cannot reliably fetch Yingce's signed public links.
+// request because MiniMax cannot reliably fetch Canvas's signed public links.
 // The request is mutated in place: URL is cleared and DataURL is set.
 func PrepareNewAPIVideoTasksMedia(ctx context.Context, r *GenerationRequest) error {
 	if r == nil {

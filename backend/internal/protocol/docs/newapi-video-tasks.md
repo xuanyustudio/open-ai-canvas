@@ -57,6 +57,6 @@ curl "{channel_base_url}/v1/video/tasks/task_xxx" \
 ## 官方资料与边界
 
 - 以连接网关的接口文档为准；创建成功后必须用 `/v1/video/tasks/{id}` 查询，不能改查 `/v1/video/generations/{id}`。
-- 参考图/音视频以 data URI 内嵌发送，不依赖上游拉取影策公网地址。
+- 参考图/音视频以 data URI 内嵌发送，不依赖上游拉取本系统公网地址。
 
 {{CONTRACT}}

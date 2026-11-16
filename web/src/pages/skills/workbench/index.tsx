@@ -70,11 +70,11 @@ const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigat
 const modKey = isMac ? "⌘" : "Ctrl";
 
 function layoutKey() {
-    return `yingce:skill-workbench:${getActiveUserScope()}:layout`;
+    return `canvas:skill-workbench:${getActiveUserScope()}:layout`;
 }
 
 function expandedKey(skillId: string) {
-    return `yingce:skill-workbench:${getActiveUserScope()}:expanded:${skillId}`;
+    return `canvas:skill-workbench:${getActiveUserScope()}:expanded:${skillId}`;
 }
 
 function readLayout(): { width: number; markdownMode: MarkdownMode } {

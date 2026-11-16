@@ -59,7 +59,7 @@ export function ChannelModelBatchEditDialog({ channelId, items, currentItems, co
             if ((event as CustomEvent).detail === scope) refreshTemplates((value) => value + 1);
         };
         const storage = (event: StorageEvent) => {
-            if (!event.key || event.key === capabilityTemplatesKey(scope) || event.key === pricingTemplatesKey(scope) || event.key === "yingce:active-user-scope") refreshTemplates((value) => value + 1);
+            if (!event.key || event.key === capabilityTemplatesKey(scope) || event.key === pricingTemplatesKey(scope) || event.key === "canvas:active-user-scope") refreshTemplates((value) => value + 1);
         };
         window.addEventListener(CAPABILITY_TEMPLATES_CHANGED, changed);
         window.addEventListener(PRICING_TEMPLATES_CHANGED, changed);

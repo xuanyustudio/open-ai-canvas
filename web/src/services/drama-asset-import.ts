@@ -5,7 +5,8 @@ import { uploadResourceFile } from "@/services/api/resources";
 // 资产包导入：浏览器按 ZIP 中央目录只读取清单与要用的图片，按设定类型与名称、集号与段号
 // 套用到当前作品。全部写入都走现有的短剧接口，归属与校验由后端负责；视频与声音样本不导入。
 
-export const DRAMA_ASSET_PACKAGE_FORMAT = "yingce.drama-asset-package";
+export const DRAMA_ASSET_PACKAGE_FORMAT = "canvas.drama-asset-package";
+const LEGACY_DRAMA_ASSET_PACKAGE_FORMAT = "yingce.drama-asset-package";
 const MANIFEST_FILE = "资产清单.json";
 const MAX_MANIFEST_BYTES = 20 << 20;
 
@@ -60,7 +61,7 @@ export type DramaAssetImportPlan = { operations: DramaAssetImportOperation[]; sk
 export async function openDramaAssetPackage(file: Blob): Promise<DramaAssetPackage> {
     const entries = await listZipEntries(file);
     const manifestEntry = entries.filter((item) => item.name === MANIFEST_FILE || item.name.endsWith(`/${MANIFEST_FILE}`)).sort((left, right) => left.name.length - right.name.length)[0];
-    if (!manifestEntry) throw new Error(`压缩包里没有「${MANIFEST_FILE}」，请选择影策导出的短剧资产包`);
+    if (!manifestEntry) throw new Error(`压缩包里没有「${MANIFEST_FILE}」，请选择本系统导出的短剧资产包`);
     if (manifestEntry.size > MAX_MANIFEST_BYTES) throw new Error("资产清单过大，无法读取");
     let manifest: DramaAssetManifest;
     try {
@@ -68,8 +69,8 @@ export async function openDramaAssetPackage(file: Blob): Promise<DramaAssetPacka
     } catch {
         throw new Error("资产清单不是有效的 JSON，压缩包可能已损坏");
     }
-    if (manifest?.format !== DRAMA_ASSET_PACKAGE_FORMAT || typeof manifest.version !== "number") throw new Error("不是影策短剧资产包");
-    if (manifest.version > 1) throw new Error("资产包来自更新版本的影策，请升级后再导入");
+    if ((manifest?.format !== DRAMA_ASSET_PACKAGE_FORMAT && manifest?.format !== LEGACY_DRAMA_ASSET_PACKAGE_FORMAT) || typeof manifest.version !== "number") throw new Error("不是短剧资产包");
+    if (manifest.version > 1) throw new Error("资产包来自更新版本的本系统，请升级后再导入");
     if (!Array.isArray(manifest.cast) || !Array.isArray(manifest.episodes)) throw new Error("资产清单缺少设定或剧集列表");
     const byName = new Map(entries.map((item) => [item.name, item]));
     const prefix = manifestEntry.name.slice(0, manifestEntry.name.length - MANIFEST_FILE.length);

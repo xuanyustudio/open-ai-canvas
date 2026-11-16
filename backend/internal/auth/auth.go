@@ -151,7 +151,7 @@ func (s *Service) PublicAuthSettings() (*PublicAuthSettings, error) {
 
 func (s *Service) Register(req RegisterRequest) (*AuthSessionResult, error) {
 	if !req.AcceptedTerms {
-		return nil, kernel.BadAuthRequest("请先同意" + s.AgreementTitleForMessage())
+		return nil, kernel.BadAuthRequest(kernel.BrandPrefix("请先同意", s.AgreementTitleForMessage()))
 	}
 	username := NormalizeUsername(req.Username)
 	email := NormalizeEmail(req.Email)

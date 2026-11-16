@@ -10,8 +10,8 @@ import (
 )
 
 func TestBuildMIMEMessageHasRequiredHeadersAndBothParts(t *testing.T) {
-	setting := EmailSettingValue{FromEmail: "noreply@example.com", FromName: "影策", Host: "smtp.example.com"}
-	raw := string(buildMIMEMessage(setting, "reader@example.com", OutgoingMail{Subject: "123456 是你的影策注册验证码", Text: "验证码：123456", HTML: "<p>123456</p>"}, time.Date(2026, 11, 6, 10, 0, 0, 0, time.UTC)))
+	setting := EmailSettingValue{FromEmail: "noreply@example.com", FromName: "Canvas", Host: "smtp.example.com"}
+	raw := string(buildMIMEMessage(setting, "reader@example.com", OutgoingMail{Subject: "123456 是你的 Canvas 注册验证码", Text: "验证码：123456", HTML: "<p>123456</p>"}, time.Date(2026, 11, 6, 10, 0, 0, 0, time.UTC)))
 	for _, want := range []string{"\r\nDate: Fri, 06 Nov 2026 10:00:00 +0000\r\n", "\r\nMessage-ID: <", "@example.com>\r\n", "multipart/alternative; boundary=", "Content-Type: text/plain; charset=UTF-8", "Content-Type: text/html; charset=UTF-8", "Auto-Submitted: auto-generated"} {
 		if !strings.Contains(raw, want) {
 			t.Fatalf("MIME message missing %q:\n%s", want, raw)

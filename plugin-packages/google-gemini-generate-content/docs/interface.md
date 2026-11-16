@@ -111,7 +111,7 @@ system 消息仅允许文本，统一移入一次 `systemInstruction`；显式 i
   "id": "google-gemini-generate-content",
   "name": "Google Gemini generateContent",
   "version": "2.0.1",
-  "author": "Google / 影策",
+  "author": "Google / Canvas",
   "description": "Google Gemini generateContent 独立请求协议插件。",
   "documentation": "<当前插件的完整 documentation，由 README.md 与 docs/interface.md 拼接而成；为避免 JSON 递归，此处不重复展开正文。>",
   "permissions": [

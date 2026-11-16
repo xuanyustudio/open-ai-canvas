@@ -5,16 +5,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { useBlocker } from "react-router";
 
 import { cn } from "@/lib/utils";
-import {
-    completeAdminLibTVOAuth,
-    disconnectAdminLibTV,
-    getAdminLibTVSetting,
-    startAdminLibTVOAuth,
-    testAdminLibTV,
-    updateAdminLibTVSetting,
-    type AdminLibTVSetting,
-    type LibTVConnectStartResult,
-} from "@/services/api/libtv";
+import { completeAdminLibTVOAuth, disconnectAdminLibTV, getAdminLibTVSetting, startAdminLibTVOAuth, testAdminLibTV, updateAdminLibTVSetting, type AdminLibTVSetting, type LibTVConnectStartResult } from "@/services/api/libtv";
 import { useAppearanceStore } from "@/stores/use-appearance-store";
 import { AdminPageFrame } from "../components/admin-shell";
 import { AdminStatusBadge, SettingsSectionCard } from "../components/admin-ui";
@@ -112,7 +103,7 @@ export default function LibTVSettingsPage() {
         const onMessage = (event: MessageEvent) => {
             if (event.origin !== window.location.origin) return;
             const data = event.data as { source?: string; status?: string } | null;
-            if (!data || data.source !== "yingce-libtv-oauth") return;
+            if (!data || data.source !== "canvas-libtv-oauth") return;
             if (data.status === "success") {
                 void load(false);
                 message.success("已连接 LibTV 账号");
@@ -203,7 +194,7 @@ export default function LibTVSettingsPage() {
             const result = await startAdminLibTVOAuth(window.location.origin);
             if (!result?.authorizeUrl) throw new Error("未能创建 LibTV 授权请求");
             setConnectFlow(result);
-            window.open(result.authorizeUrl, "yingce-libtv-oauth", "popup=yes,width=480,height=720");
+            window.open(result.authorizeUrl, "canvas-libtv-oauth", "popup=yes,width=480,height=720");
             if (result.callbackMode === "redirect") startPoll();
             message.info(result.hint || "请在打开的窗口中用微信扫码授权");
         } catch (error) {
@@ -435,11 +426,7 @@ export default function LibTVSettingsPage() {
                                     {connected ? <CircleCheck className="size-4" aria-hidden="true" /> : <AlertTriangle className="size-4" aria-hidden="true" />}
                                     {connectionLabel}
                                 </span>
-                                <p>
-                                    {connected
-                                        ? "已使用站点级管理员授权。用户导入画布时会复用这个连接，无需各自粘贴密钥。"
-                                        : "官方已不再提供可粘贴的接口密钥。请连接一个管理员 LibTV 账号，用于按 UUID 导入可复制画布。"}
-                                </p>
+                                <p>{connected ? "已使用站点级管理员授权。用户导入画布时会复用这个连接，无需各自粘贴密钥。" : "官方已不再提供可粘贴的接口密钥。请连接一个管理员 LibTV 账号，用于按 UUID 导入可复制画布。"}</p>
                             </div>
                             <div className="admin-third-party-credential-actions">
                                 <Button type={connected ? "default" : "primary"} icon={<Link2 className="size-4" />} loading={connecting} disabled={saving || refreshing || disconnecting} onClick={() => void startConnect()}>
@@ -541,9 +528,7 @@ export default function LibTVSettingsPage() {
                             </div>
                             <div className={cn("admin-third-party-test-note", testStatus === "error" && "is-error", testStatus === "success" && "is-success")} role={testStatus === "error" ? "alert" : "status"}>
                                 {testStatus === "success" ? <BadgeCheck className="size-4" aria-hidden="true" /> : testStatus === "error" ? <AlertTriangle className="size-4" aria-hidden="true" /> : <Server className="size-4" aria-hidden="true" />}
-                                <span>
-                                    {testStatus === "success" ? "验证成功：已连接的 LibTV 账号可以读取该画布。" : testStatus === "error" ? `验证失败：${testError}` : "验证会产生一次真实的外部只读请求，但不会保存画布内容。"}
-                                </span>
+                                <span>{testStatus === "success" ? "验证成功：已连接的 LibTV 账号可以读取该画布。" : testStatus === "error" ? `验证失败：${testError}` : "验证会产生一次真实的外部只读请求，但不会保存画布内容。"}</span>
                             </div>
                         </SettingsSectionCard>
                     </div>

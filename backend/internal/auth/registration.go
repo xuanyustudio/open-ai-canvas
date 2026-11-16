@@ -170,7 +170,7 @@ func (s *Service) defaultAgreementTitle() string {
 	if brand == "" {
 		brand = DefaultBrandName
 	}
-	return brand + "服务协议"
+	return kernel.BrandJoin(brand, "服务协议")
 }
 
 func (s *Service) readRegistrationSetting() (*model.SystemSetting, registrationSettingValue, error) {

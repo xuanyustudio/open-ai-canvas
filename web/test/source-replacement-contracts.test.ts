@@ -42,8 +42,8 @@ describe("替换模块的互操作合同", () => {
         const archive = new MediaPackage();
         archive.put("files/a", new Uint8Array([5, 7]));
         expect(() => archive.put("files/a", "duplicate")).toThrow();
-        const zip = await readZip(await archive.finish("assets.json", { app: "yingce", files: [{ path: "files/a" }] }));
+        const zip = await readZip(await archive.finish("assets.json", { app: "canvas", files: [{ path: "files/a" }] }));
         expect([...new Uint8Array(await zip.get("files/a")!.arrayBuffer())]).toEqual([5, 7]);
-        expect(JSON.parse(await zip.get("assets.json")!.text()).app).toBe("yingce");
+        expect(JSON.parse(await zip.get("assets.json")!.text()).app).toBe("canvas");
     });
 });

@@ -6,7 +6,7 @@ import type { JianyingDraftOptions } from "@/services/api/drama-export";
 // 短剧导出由后端校验后流式返回 ZIP。用隐藏表单提交到 iframe：大文件交给浏览器下载管理器，
 // 不在页面内存里拼包；校验失败时 iframe 收到 JSON 信封，读出 msg 交给调用方提示。
 
-const JIANYING_ROOT_KEY = "yingce.drama.jianyingDraftRoot";
+const JIANYING_ROOT_KEY = "canvas.drama.jianyingDraftRoot";
 
 function submitArchiveForm(path: string, fields: Array<[string, string]>, onError: (message: string) => void) {
     const frame = document.createElement("iframe");

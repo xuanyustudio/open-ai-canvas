@@ -281,10 +281,10 @@ func parseBuiltinShowcaseMedia(raw string) ([]SkillShowcaseMedia, error) {
 
 func normalizeBuiltinSkillMetadata(skillID string, metadata builtinSkillMetadata) (builtinSkillMetadata, error) {
 	if metadata.Owner == "" {
-		metadata.Owner = "yingce-system"
+		metadata.Owner = "canvas-system"
 	}
 	if metadata.Author == "" {
-		metadata.Author = "影策"
+		metadata.Author = "Canvas"
 	}
 	if metadata.Tag == "" {
 		metadata.Tag = "others"

@@ -3,8 +3,8 @@ name: "图片编辑工作流"
 description: "基于画布图片节点，用自然语言和参考图完成图片编辑。"
 metadata:
   version: "1.0.0"
-  author: "影策"
-  owner: "yingce-system"
+  author: "Canvas"
+  owner: "canvas-system"
   skillId: "yingce-image-editing"
   tag: creative
   sortWeight: 900

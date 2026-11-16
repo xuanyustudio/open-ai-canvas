@@ -39,7 +39,7 @@ const DEPTH_OPACITY = [1, 0.98, 0.95, 0.91, 0.86];
 const AUTO_ADVANCE_MS = 6500;
 /** 记住最近展示过的条目数，换页/刷新时不会又抽到同一批。 */
 const RECENT_MEMORY = 66;
-const RECENT_KEY = "yingce:creation-gallery-recent";
+const RECENT_KEY = "canvas:creation-gallery-recent";
 /**
  * 等封面的兜底时长。正常情况下封面几百毫秒就回来了，这条不会生效；
  * 万一某张请求挂住不回，也不能让队列永远缺一块，超时就先放行。

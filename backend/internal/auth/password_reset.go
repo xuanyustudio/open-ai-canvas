@@ -159,7 +159,7 @@ func invalidPasswordResetCode() *AuthError {
 }
 
 func passwordResetEmail(brandName, recipient, code string) (OutgoingMail, error) {
-	return codeMail(emailtpl.CodeEmail{Brand: brandName, Heading: "重置密码", SubjectLabel: "密码重置验证码", Intro: "你正在重置" + brandName + "账号密码。请在找回密码页面输入下方验证码，然后设置新密码。", Code: code, TTLMinutes: 10, Recipient: recipient,
+	return codeMail(emailtpl.CodeEmail{Brand: brandName, Heading: "重置密码", SubjectLabel: "密码重置验证码", Intro: kernel.BrandPrefix("你正在重置", kernel.BrandJoin(brandName, "账号密码")) + "。请在找回密码页面输入下方验证码，然后设置新密码。", Code: code, TTLMinutes: 10, Recipient: recipient,
 		SecurityTip: "如果这不是你本人的操作，请忽略本邮件，密码不会被修改；同时建议检查邮箱账号的安全。重置成功后，所有设备上的登录会话都会退出。"})
 }
 

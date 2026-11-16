@@ -92,7 +92,7 @@ POST /v1/text/chatcompletion_v2，正文 model/messages，不发送通用 input/
   "id": "minimax-text-native",
   "name": "MiniMax Text Native",
   "version": "2.0.1",
-  "author": "MiniMax / 影策",
+  "author": "MiniMax / Canvas",
   "description": "MiniMax Text Native 独立请求协议插件。",
   "documentation": "<当前插件的完整 documentation，由 README.md 与 docs/interface.md 拼接而成；为避免 JSON 递归，此处不重复展开正文。>",
   "permissions": [

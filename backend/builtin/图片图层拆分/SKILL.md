@@ -3,8 +3,8 @@ name: "图片图层拆分"
 description: "按用户指定的主体或区域拆分图片图层，并把结果回写到画布。"
 metadata:
   version: "1.0.0"
-  author: "影策"
-  owner: "yingce-system"
+  author: "Canvas"
+  owner: "canvas-system"
   skillId: "yingce-image-layer-split"
   tag: creative
   sortWeight: 880

@@ -326,7 +326,7 @@ func (s *Service) finishOAuthLogin(state *model.OAuthState, event *model.LoginLo
 			return nil, kernel.Forbidden("管理员未开放新用户注册")
 		}
 		if !state.AcceptedTerms {
-			return nil, kernel.BadAuthRequest("请先同意" + s.AgreementTitleForMessage())
+			return nil, kernel.BadAuthRequest(kernel.BrandPrefix("请先同意", s.AgreementTitleForMessage()))
 		}
 		user, identity, err = s.newOAuthUser(profile)
 		if err != nil {

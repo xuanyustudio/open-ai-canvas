@@ -1,20 +1,20 @@
 ---
 title: 多平台账号池最终指导方案
-description: 在影策后端建设通用账号池，定义平台适配标准，首批接入 LibTV 与即梦，模型与价格沿用系统渠道
+description: 在 Canvas 后端建设通用账号池，定义平台适配标准，首批接入 LibTV 与即梦，模型与价格沿用系统渠道
 ---
 
 # 多平台账号池最终指导方案
 
 > 状态：最终指导方案，未实施。
 >
-> 本文是实施依据。标注「〔P0〕」的条目依赖平台未公开的细节，必须在第 0 阶段用真实账号核实并回填本文后再进入对应开发。其余条目均已对照影策代码、平台官方资料或开源项目实现核对过，依据列在第 18 节。
+> 本文是实施依据。标注「〔P0〕」的条目依赖平台未公开的细节，必须在第 0 阶段用真实账号核实并回填本文后再进入对应开发。其余条目均已对照 Canvas 代码、平台官方资料或开源项目实现核对过，依据列在第 18 节。
 
 ## 0. 阅读指引
 
 | 读者 | 先读 |
 | --- | --- |
 | 评审方案的人 | 第 1、4、14、16 节 |
-| 实现影策后端的人 | 第 5、6、9、11、12 节 |
+| 实现 Canvas 后端的人 | 第 5、6、9、11、12 节 |
 | 实现平台适配的人 | 第 5、7、9.2 节 |
 | 部署运维 | 第 10、11 节 |
 
@@ -24,26 +24,26 @@ description: 在影策后端建设通用账号池，定义平台适配标准，�
 - **账号**：某平台上的一个登录身份，带凭据、档位、余额。
 - **适配**：把某个平台的协议转换成本文第 5 节标准的代码。
 - **适配服务**：运行一个或多个适配的独立进程（容器）。
-- **账号池框架**：影策后端里与平台无关的部分：凭据保管、选号、任务、计费、渠道、页面。
+- **账号池框架**：Canvas 后端里与平台无关的部分：凭据保管、选号、任务、计费、渠道、页面。
 - **托管渠道**：账号池为每个平台自动建立的系统渠道。用户看到的模型就是这个渠道下的渠道模型。
 
 ## 1. 结论
 
-1. **影策后端内置一个与平台无关的账号池框架**，一次建好。它负责凭据加密保管、余额与档位同步、启停、优先级和选号策略、任务固定账号、失败换号、计费、后台页面。
-2. **平台差异全部收敛到一份「平台适配标准」**（第 5 节，协议名 `yingce.accountpool/v1`）。适配运行在**独立的适配服务**里，影策通过 HTTP 调用，做法与现有的 `yingce-agent` 一致。新增平台只需实现标准、部署适配、在后台登记，**不改影策代码**。
+1. **Canvas 后端内置一个与平台无关的账号池框架**，一次建好。它负责凭据加密保管、余额与档位同步、启停、优先级和选号策略、任务固定账号、失败换号、计费、后台页面。
+2. **平台差异全部收敛到一份「平台适配标准」**（第 5 节，协议名 `yingce.accountpool/v1`）。适配运行在**独立的适配服务**里，Canvas 通过 HTTP 调用，做法与现有的 `yingce-agent` 一致。新增平台只需实现标准、部署适配、在后台登记，**不改 Canvas 代码**。
 3. **首批平台**：
    - **LibTV**：走官方 Remote MCP（`https://mcp.liblib.tv/mcp`），OAuth 2.1 授权码 + PKCE，微信扫码。
    - **即梦**：走**即梦官方 CLI `dreamina`**，它使用 OAuth 设备码登录（Device Flow），提供积分查询和异步任务命令。不使用网页接口逆向。
 4. **添加账号**：页面内完成。支持三种方式：设备码扫码（即梦）、授权页扫码（LibTV）、粘贴凭据（任意平台的兜底）。添加后自动识别身份、档位、余额和可用模型。
 5. **用户侧无差别**：每个平台对应一个托管的系统渠道，LibTV、即梦的模型就是普通渠道模型。价格、成本价、能力参数、启停全部在「渠道与模型」里配置，和其他渠道是同一条线。托管渠道也能和官方 API 渠道一起挂到同一个前台模型下，按优先级互为备份。
 6. **调度**：账号可单独启停，设置优先级和权重；策略支持「按优先级用完一个再换」「负载均衡」「余额优先」「先用快过期的额度」「加权」。选号同时看档位能力、并发、余额和冷却。
-7. **部署**：适配服务用**独立的 Compose 项目**部署并接入影策的网络。原因是 Host Updater 升级时执行 `up --remove-orphans`，同项目里不在 `docker-compose.deploy.yml` 中的容器会被删除。
+7. **部署**：适配服务用**独立的 Compose 项目**部署并接入 Canvas 的网络。原因是 Host Updater 升级时执行 `up --remove-orphans`，同项目里不在 `docker-compose.deploy.yml` 中的容器会被删除。
 
 ## 2. 需求与验收点
 
 | 需求 | 验收点 |
 | --- | --- |
-| 后端账号池，可托管不同平台账号 | 后台「账号池」页面按平台分组展示账号；同一套页面和接口管理 LibTV、即梦；新增平台不改影策代码 |
+| 后端账号池，可托管不同平台账号 | 后台「账号池」页面按平台分组展示账号；同一套页面和接口管理 LibTV、即梦；新增平台不改 Canvas 代码 |
 | 期初定义好标准 | 第 5 节标准有版本号、字段定义、错误分类和一致性测试；首批两个平台都按标准实现并通过测试 |
 | 输入 Token 或扫码都能添加 | 设备码扫码、授权页扫码、粘贴凭据三种方式；添加完成前展示平台身份供核对；同一平台账号不能重复添加 |
 | 识别剩余余额 | 每个账号显示余额（可多种余额）、档位、到期、下次额度刷新时间；定时同步并在任务结束后刷新 |
@@ -62,7 +62,7 @@ description: 在影策后端建设通用账号池，定义平台适配标准，�
 | **Remote MCP** `https://mcp.liblib.tv/mcp` | 授权服务器元数据（已直接读取）：`/authorize`、`/token`、`/register`（动态客户端注册）、`/revoke`；`grant_types=[authorization_code, refresh_token]`；`code_challenge_methods=[S256]`；scope 为 `libtv:account:read`、`libtv:project:read`、`libtv:project:write`、`libtv:media:write`、`libtv:task:write`、`libtv:export:write`。未授权调用返回 401（已实测）。社区桥接实现表明：授权与换 token 必须带 `resource=https://mcp.liblib.tv/mcp`；access token 约 1 小时，靠 refresh token 续期；登录为微信扫码；工具包括 `account_user`、`search_models`、`get_model`、`generation_submit`、`generate_video`、`task_status`、`upload_media` 等。LibTV 官方技能要求模型和参数从实时 schema 读取，传输超时不等于失败，不能因此重复提交 | **选用** |
 | 官方 CLI `libtv` | 能操作画布、节点、模型、素材；`libtv node <key> --run` 同步阻塞到出结果并写回画布。公开渠道未找到安装包 | 只在 P0 作协议对照 |
 | IM OpenAPI | `sk-libtv-…` 静态密钥，给后端 Agent 发自然语言，不能指定模型和规格 | 不选用 |
-| 网页 API | 影策现有 LibTV 画布导入使用的 `token` 请求头接口 | 不用于生成 |
+| 网页 API | Canvas 现有 LibTV 画布导入使用的 `token` 请求头接口 | 不用于生成 |
 
 LibTV 的计价单位是积分，存在多档会员（社区反馈最低档约每月 47 元含 1500 积分，仅作参考〔P0〕）。
 
@@ -71,7 +71,7 @@ LibTV 的计价单位是积分，存在多档会员（社区反馈最低档约�
 | 接入面 | 事实 | 结论 |
 | --- | --- | --- |
 | **官方 CLI `dreamina`** | 字节官方发布，安装脚本 `https://jimeng.jianying.com/cli` 列出 linux 与 darwin 的 amd64、arm64 以及 windows amd64 二进制（已下载 macOS arm64 版本核对各子命令帮助）。登录为 **OAuth Device Flow**：输出 `verification_uri`、`user_code`、`device_code`；`login --headless` 输出后立即退出，再用 `login checklogin --device_code=…` 完成。命令包括 `user_credit`（积分）、`text2video`、`image2video`、`frames2video`、`multimodal2video`、`query_result --submit_id`、`list_task`、`session`。生成为异步：`submit_id` + `gen_status=querying` 只代表受理，`gen_status=success` 才是成功；查询结果里的 `video_url` 只是预览链接，下载必须用 `query_result --download_dir`。并发超限返回 `ExceedConcurrencyLimit`（ret `1310`）；部分模型首次使用需在网页端完成一次生成，否则返回 `AigcComplianceConfirmationRequired`。模型和规格按命令区分，例如 `seedance2.5` 为 VIP 专属、时长 4–30 秒、参考帧生成时拒绝显式比例；`seedance2.0_vip` 支持 720p/1080p/4k | **选用** |
-| 火山引擎官方 API | 影策已支持（`volcengine-jimeng-video` 插件、火山方舟 Seedance） | 保留为独立渠道，可与账号池组成前台模型路由 |
+| 火山引擎官方 API | Canvas 已支持（`volcengine-jimeng-video` 插件、火山方舟 Seedance） | 保留为独立渠道，可与账号池组成前台模型路由 |
 | 网页逆向（jimeng-free-api-all 等） | 用网页 Cookie `sessionid`；部分 Seedance 2.0 线路被风控拦截，需要无头浏览器代签名；作者声明可能违反服务条款、账号有被限制风险 | **不采用**，只参考其积分与模型字段 |
 
 从 CLI 二进制的字符串可以看到它使用 ByteDance passport 的设备码接口（`/passport/open/get_device_code/`、`/passport/open/check_device_code/`、`/passport/open/refresh_token/`），并包含本地 `tasks.db` 和 keyring 相关代码。凭据在 Linux 无图形环境下的存放方式需 P0 核实〔P0〕。
@@ -89,7 +89,7 @@ LibTV 的计价单位是积分，存在多档会员（社区反馈最低档约�
 
 这些项目都提示了平台条款风险：多账号集中托管可能违反平台用户协议，账号可能被限制。本方案只用官方接口，但集中托管本身的风险仍在，只限内部使用。
 
-### 3.4 影策现状约束
+### 3.4 Canvas 现状约束
 
 - **插件**：插件不能注册路由、表、Worker，也不能注入菜单（`docs/content/docs/plugins/plugin-system.mdx` §3；`admin-shell.tsx` 的 `adminNavigation` 是静态数组）。只有 Go 内置的 manifest 能用 `host:` 执行器（先例 `app/sms_plugins.go`、`app/workflow_plugins.go`）。
 - **视频链路可复用**：分离式回查（`provider_protocol_async.go`，最长 48 小时）、`resumedProviderRequestID` 恢复、`runVideoDownload` 下载、`persistGeneratedMediaResult` 转存、`task_billing.go` 预扣/结算/退款/复核、`ChannelSlotFailureDetails` 可识别的「上游未发出」退款路径。
@@ -103,7 +103,7 @@ LibTV 的计价单位是积分，存在多档会员（社区反馈最低档约�
 ### 4.1 架构
 
 ```text
-┌──────────────────────────────── 影策 web 后台 ────────────────────────────────┐
+┌──────────────────────────────── Canvas web 后台 ────────────────────────────────┐
 │ 渠道与模型（现有）                         账号池（新，插件启用后可见）          │
 │  └ 托管渠道「LibTV 账号池」「即梦账号池」   平台 | 账号 | 模型覆盖 | 调用记录 | 设置 │
 │     获取模型 / 能力 / 价格档 / 启停          添加账号弹窗（设备码 / 授权页 / 粘贴）  │
@@ -130,9 +130,9 @@ LibTV 的计价单位是积分，存在多档会员（社区反馈最低档约�
 
 | 编号 | 决策 | 备选 | 理由 |
 | --- | --- | --- | --- |
-| D1 | 账号池框架内置在影策后端 | 独立网关（自带页面和数据库） | 后台菜单和页面在影策里；复用任务、计费、渠道、路由；凭据进主库统一加密和备份 |
-| D2 | 平台适配放独立适配服务，经 HTTP 标准协议调用 | 编进影策后端 | 平台协议变化快，与影策发布解耦；官方 CLI 二进制和子进程与主后端隔离；适配代码可放私有仓库；语言不限；新增平台不改影策代码 |
-| D3 | 凭据只存在影策主库，适配服务无状态 | 适配服务自己保存凭据 | 备份、权限、审计在一处；适配服务重建不丢账号；适配服务本身不形成凭据库 |
+| D1 | 账号池框架内置在 Canvas 后端 | 独立网关（自带页面和数据库） | 后台菜单和页面在 Canvas 里；复用任务、计费、渠道、路由；凭据进主库统一加密和备份 |
+| D2 | 平台适配放独立适配服务，经 HTTP 标准协议调用 | 编进 Canvas 后端 | 平台协议变化快，与 Canvas 发布解耦；官方 CLI 二进制和子进程与主后端隔离；适配代码可放私有仓库；语言不限；新增平台不改 Canvas 代码 |
+| D3 | 凭据只存在 Canvas 主库，适配服务无状态 | 适配服务自己保存凭据 | 备份、权限、审计在一处；适配服务重建不丢账号；适配服务本身不形成凭据库 |
 | D4 | 每个平台一个托管系统渠道 | 每个账号一个渠道 | 价格只配一遍；渠道列表不膨胀；能按余额和档位选号 |
 | D5 | 价格、能力、启停沿用渠道模型 | 账号池单独定价 | 与其他渠道一条线，计费链路零改动 |
 | D6 | 即梦用官方 `dreamina` CLI | 网页逆向；自行实现 passport 接口 | 官方工具，登录是标准设备码流程，风控和条款风险最低；CLI 升级由官方维护。自行实现 passport 接口作为 CLI 不可用时的后备〔P0〕 |
@@ -140,7 +140,7 @@ LibTV 的计价单位是积分，存在多档会员（社区反馈最低档约�
 | D8 | 提交时选号，任务固定账号 | 每次请求重新选号 | 平台任务按账号隔离，换账号查不到 |
 | D9 | 内置系统插件 `account-pool` 控制启停和菜单 | 功能开关 | 符合「插件安装后出现菜单」的预期；沿用插件管理的启停与审计 |
 | D10 | 适配服务用独立 Compose 项目部署 | 同一 Compose 项目里的覆盖文件 | Host Updater 的 `--remove-orphans` 会删除同项目中的额外容器 |
-| D11 | 标准带主版本号，主版本不同即拒绝 | 不做版本管理 | 适配服务与影策分开发布，必须能识别不兼容 |
+| D11 | 标准带主版本号，主版本不同即拒绝 | 不做版本管理 | 适配服务与 Canvas 分开发布，必须能识别不兼容 |
 
 ### 4.3 生成时序
 
@@ -148,7 +148,7 @@ LibTV 的计价单位是积分，存在多档会员（社区反馈最低档约�
 sequenceDiagram
     autonumber
     participant U as 用户
-    participant API as 影策 CreateTask
+    participant API as Canvas CreateTask
     participant W as Task Worker
     participant P as 账号池框架
     participant DB as 主库
@@ -188,16 +188,16 @@ sequenceDiagram
 ### 5.1 原则
 
 1. 适配只翻译协议，不做调度、计费、重试、换号。
-2. 适配无状态：凭据由影策每次随请求传入，用完即弃；允许保留的只有短期幂等记录和待取回的结果文件。
+2. 适配无状态：凭据由 Canvas 每次随请求传入，用完即弃；允许保留的只有短期幂等记录和待取回的结果文件。
 3. 凭据只出现在请求体里，不出现在 URL、日志、错误信息中。
-4. 适配可以在任意一次调用中返回更新后的凭据（例如 token 轮换），影策负责持久化。
+4. 适配可以在任意一次调用中返回更新后的凭据（例如 token 轮换），Canvas 负责持久化。
 5. 所有错误必须归入第 5.9 节的分类；无法确定的一律归为 `ambiguous`。
 
 ### 5.2 传输与鉴权
 
 - HTTP/1.1 + JSON；提交任务用 `multipart/form-data`（JSON 请求部分 + 素材文件）。
-- 影策 → 适配：`Authorization: Bearer <适配服务令牌>`，令牌至少 32 个字符，与 `YINGCE_AGENT_TOKEN` 规则一致。
-- 每个请求带 `X-Request-Id`，适配原样写入日志与响应，便于和影策任务关联。
+- Canvas → 适配：`Authorization: Bearer <适配服务令牌>`，令牌至少 32 个字符，与 `YINGCE_AGENT_TOKEN` 规则一致。
+- 每个请求带 `X-Request-Id`，适配原样写入日志与响应，便于和 Canvas 任务关联。
 - 除 `GET /healthz`、`GET /v1/platforms` 和文件下载外，全部接口使用 `POST`，凭据只放在请求体里，不进入 URL。
 - 响应统一为成功体或错误体：
 
@@ -247,19 +247,19 @@ sequenceDiagram
 }
 ```
 
-- `credential.mutatesOnUse=true` 表示任何调用都可能刷新凭据（CLI 类）。影策据此把该账号的所有调用串行化（第 6.5 节）。
-- `protocolVersion` 主版本与影策不一致时，影策拒绝登记该平台。
+- `credential.mutatesOnUse=true` 表示任何调用都可能刷新凭据（CLI 类）。Canvas 据此把该账号的所有调用串行化（第 6.5 节）。
+- `protocolVersion` 主版本与 Canvas 不一致时，Canvas 拒绝登记该平台。
 
 ### 5.5 登录方式
 
 | `kind` | 适用 | 流程 | 展示材料 |
 | --- | --- | --- | --- |
-| `device_code` | 即梦 | `begin` → 管理员在任意浏览器或手机打开地址并用目标账号确认 → 影策按 `interval` 调 `poll` | `verificationUri`、`userCode`、`expiresIn`、`interval` |
-| `authorization_code` | LibTV | `begin`（影策提供 `redirectUri`）→ 打开 `authorizeUrl` 扫码 → 平台回跳影策 → 影策调 `complete` | `authorizeUrl`、`expiresIn` |
+| `device_code` | 即梦 | `begin` → 管理员在任意浏览器或手机打开地址并用目标账号确认 → Canvas 按 `interval` 调 `poll` | `verificationUri`、`userCode`、`expiresIn`、`interval` |
+| `authorization_code` | LibTV | `begin`（Canvas 提供 `redirectUri`）→ 打开 `authorizeUrl` 扫码 → 平台回跳 Canvas → Canvas 调 `complete` | `authorizeUrl`、`expiresIn` |
 | `credential_form` | 任意平台兜底 | 管理员按 `formFields` 填写 → `import` | 表单字段定义 |
 | `qr_image`（预留） | 平台原生扫码 | `begin` 返回二维码图片 → `poll` | `qrImage`、`expiresIn` |
 
-`loginState` 由适配生成（例如包含 PKCE verifier、device_code、动态注册得到的 client_id），对影策不透明。影策加密保存，不发给浏览器。
+`loginState` 由适配生成（例如包含 PKCE verifier、device_code、动态注册得到的 client_id），对 Canvas 不透明。Canvas 加密保存，不发给浏览器。
 
 ### 5.6 凭据与账号信息
 
@@ -274,7 +274,7 @@ sequenceDiagram
 ```json
 {
   "platformUserId": "12345678",
-  "displayName": "影策采购 07",
+  "displayName": "Canvas 采购 07",
   "tier": { "code": "vip", "name": "高级会员", "expiresAt": "2027-01-31T00:00:00Z" },
   "balances": [
     { "kind": "credits", "label": "会员积分", "amount": 12800, "unit": "积分", "expiresAt": null, "resetAt": null },
@@ -285,7 +285,7 @@ sequenceDiagram
 }
 ```
 
-`platformUserId` 是去重依据，必须稳定。`balances` 可以有多项；`resetAt` 表示额度在该时间恢复，影策据此设置冷却截止时间。
+`platformUserId` 是去重依据，必须稳定。`balances` 可以有多项；`resetAt` 表示额度在该时间恢复，Canvas 据此设置冷却截止时间。
 
 ### 5.7 模型与规格
 
@@ -317,7 +317,7 @@ sequenceDiagram
 }
 ```
 
-- `video` 字段与影策 `VideoCapabilityConfig`（`backend/internal/app/model_capability.go`）同构，影策直接用它预填渠道模型能力。
+- `video` 字段与 Canvas `VideoCapabilityConfig`（`backend/internal/app/model_capability.go`）同构，Canvas 直接用它预填渠道模型能力。
 - `rules` 描述适配会在请求时做的规范化，例如即梦 `seedance2.5` 参考帧生成时比例跟随首帧。页面上提示管理员。
 - `costHints` 只作调度和成本参考，不参与用户计费。
 - `actionRequired` 非空表示该账号使用该模型前需要人工操作，例如即梦的网页端首次生成确认。
@@ -344,7 +344,7 @@ sequenceDiagram
 }
 ```
 
-`role` 取值：`first_frame`、`last_frame`、`reference_image`、`reference_video`、`reference_audio`，与影策现有的首尾帧和参考素材语义一一对应。
+`role` 取值：`first_frame`、`last_frame`、`reference_image`、`reference_video`、`reference_audio`，与 Canvas 现有的首尾帧和参考素材语义一一对应。
 
 提交响应：
 
@@ -373,7 +373,7 @@ sequenceDiagram
 
 ### 5.9 错误分类
 
-| `class` | 含义 | 影策对账号 | 影策对任务 |
+| `class` | 含义 | Canvas 对账号 | Canvas 对任务 |
 | --- | --- | --- | --- |
 | `auth_expired` | access token 过期，可刷新 | 加锁刷新后重试一次 | 继续 |
 | `auth_invalid` | 刷新失败或凭据被吊销 | `reauth_required` | 换号（提交阶段）/ 等待人工（回查阶段） |
@@ -393,7 +393,7 @@ sequenceDiagram
 
 标准随附一套一致性测试（第 12 节），新平台适配必须通过才能登记：描述字段完整、登录各状态、错误分类映射、`credentialUpdate` 行为、幂等提交、凭据不出现在日志与错误中。
 
-## 6. 影策账号池框架
+## 6. Canvas 账号池框架
 
 ### 6.1 插件、菜单与托管渠道
 
@@ -498,7 +498,7 @@ sequenceDiagram
     autonumber
     participant M as 管理员
     participant D as 添加账号弹窗
-    participant B as 影策后端
+    participant B as Canvas 后端
     participant A as 适配服务
     participant X as 平台登录页
 
@@ -539,7 +539,7 @@ sequenceDiagram
 
 防止授权错账号：浏览器可能还登录着上一个账号。
 
-- 设备码方式天然不依赖影策页面的浏览器会话，推荐在手机上用目标账号确认。
+- 设备码方式天然不依赖 Canvas 页面的浏览器会话，推荐在手机上用目标账号确认。
 - 授权页方式在连续添加时提示先退出平台登录或使用无痕窗口；若平台支持强制重新登录参数则带上〔P0〕。
 - 第 ③ 步强制核对身份，重复即拦截。
 
@@ -687,14 +687,14 @@ runAccountPoolVideoTask:
 
 - 分离式等待复用 `providerStatePendingError{Detached:true}`，`shouldDeferProviderTask` 通过注册表元数据 `DetachedPolling=true` 识别，最长 48 小时。下次回查间隔取 `estimatedRemainingSeconds` 与 `detachedPollDelay(queueAhead)` 的较大者，上限 2 分钟，避免预计还要很久时频繁查询。
 - **幂等与对账**：提交前先写 job 和 `idempotency_key`。适配服务保留 24 小时幂等记录，同一键重复提交直接返回首次结果。进程崩溃后发现 `submitting`/`ambiguous` 的 job，调用 `tasks/reconcile`：`found` 补记并回查；`not_found` 失败退款；`unknown` 交给现有 `BillingFailureRequiresReview` 人工复核。
-- **素材**：影策从自己的存储读取字节随提交发送，不要求资源可公网访问；适配负责上传到平台（LibTV 的上传工具、即梦 CLI 的本地文件参数）。
-- **结果**：`url` 结果必须通过影策出站校验后直接下载；`fileId` 结果从适配服务取回，取回后适配删除。下载复用 `runVideoDownload`，失败走现有媒体恢复。
+- **素材**：Canvas 从自己的存储读取字节随提交发送，不要求资源可公网访问；适配负责上传到平台（LibTV 的上传工具、即梦 CLI 的本地文件参数）。
+- **结果**：`url` 结果必须通过 Canvas 出站校验后直接下载；`fileId` 结果从适配服务取回，取回后适配删除。下载复用 `runVideoDownload`，失败走现有媒体恢复。
 - **取消**：平台描述 `features.cancel=true` 时接入 `requestProviderCancellation`；否则后台仍回查到终态并记录消耗。
 - **人工恢复**：`QueryFailedVideoTask`、`AdminQueryFailedVideoTask` 增加 `account-pool` 分支，只查询一次，不提交。
 
 ### 6.10 计费
 
-- 用户消耗影策积分，链路不变：价格档预扣、成功结算、失败退款、不确定转人工复核。
+- 用户消耗 Canvas 积分，链路不变：价格档预扣、成功结算、失败退款、不确定转人工复核。
 - 售价、成本价、加价全部在「渠道与模型」现有编辑器配置，维度为 `operation` × `vquality` × `videoSeconds`，计费方式 `fixed_request` 或 `per_second`。
 - 账号池不提供定价入口。`account_pool_jobs.balance_charged` 记录平台单位的实际消耗，只用于用量统计和调度。成本价由管理员按采购价折算后填入价格档成本价，与其他渠道一致。
 - 同一规格不论派给哪个账号、哪个档位，用户价格相同。
@@ -716,7 +716,7 @@ runAccountPoolVideoTask:
 
 | 标准接口 | 实现 |
 | --- | --- |
-| `login/begin`（`authorization_code`） | 首次对影策给定的 `redirectUri` 调 `/register` 动态注册（`token_endpoint_auth_method=none`，scope 取全部），把 `client_id` 放进 `loginState`；生成 PKCE（S256）与 state；`authorizeUrl` 带 `resource=https://mcp.liblib.tv/mcp` |
+| `login/begin`（`authorization_code`） | 首次对 Canvas 给定的 `redirectUri` 调 `/register` 动态注册（`token_endpoint_auth_method=none`，scope 取全部），把 `client_id` 放进 `loginState`；生成 PKCE（S256）与 state；`authorizeUrl` 带 `resource=https://mcp.liblib.tv/mcp` |
 | `login/complete` | 用 code + verifier + `resource` 换 token；凭据 `data` 包含 `client_id`、`client_secret`（若有）、`access_token`、`refresh_token`、`expires_at` |
 | `login/import` | 接受 MCP 客户端常见的 `credentials.json` 结构 |
 | `credential/refresh` | `grant_type=refresh_token` + `resource`；返回新凭据（refresh token 若轮换则替换） |
@@ -726,7 +726,7 @@ runAccountPoolVideoTask:
 | `tasks/query` | `task_status`；结果为 `libtv-res.liblib.art` 公网地址时直接返回 `url`〔P0：是否需要鉴权〕 |
 | `tasks/reconcile` | 在专用项目中按节点名查找 |
 | MCP 客户端 | 使用官方 Go SDK（`github.com/modelcontextprotocol/go-sdk` v1.8，Apache-2.0/MIT），`StreamableClientTransport` + 自定义 `RoundTripper` 注入 Bearer；SDK 会与服务端协商协议版本 |
-| 专用项目 | 每个账号一个「影策账号池」项目，节点数超过阈值后新建〔P0：项目节点上限〕 |
+| 专用项目 | 每个账号一个「Canvas 账号池」项目，节点数超过阈值后新建〔P0：项目节点上限〕 |
 
 ### 7.2 即梦适配
 
@@ -742,7 +742,7 @@ runAccountPoolVideoTask:
 | `tasks/reconcile` | `list_task --limit=…` 按提交时间与模型匹配；为每个账号创建专用 `session`，缩小匹配范围〔P0〕 |
 | 错误映射 | `ExceedConcurrencyLimit`（ret 1310）→ `concurrency_limit`；`AigcComplianceConfirmationRequired` → `account_action_required`（提示在即梦网页端用该模型完成一次生成）；积分不足 → `insufficient_balance`；登录失效 → `auth_invalid`〔P0：完整错误码表〕 |
 | 规格规则 | `seedance2.5` 参考帧生成不传 `--ratio`（跟随首帧），在 `rules` 中声明；`--video_resolution` 必传；不支持的组合在适配内直接返回 `invalid_request`，不提交 |
-| 进程与目录 | 每次调用新建临时 HOME（建议 tmpfs），执行完删除；单次调用设超时；同账号调用由影策串行 |
+| 进程与目录 | 每次调用新建临时 HOME（建议 tmpfs），执行完删除；单次调用设超时；同账号调用由 Canvas 串行 |
 | 二进制 | 镜像构建时用官方安装脚本下载对应架构二进制，记录版本与 SHA-256；运行时不自动更新，升级随适配服务镜像发布 |
 
 VIP 替代：CLI 说明中建议非 VIP 模型并发受限时可尝试对应 VIP 变体。账号池不自动替换用户选择的模型；如需此能力，作为可选设置在 P3 评估，前提是规格不降低。
@@ -773,7 +773,7 @@ VIP 替代：CLI 说明中建议非 VIP 模型并发受限时可尝试对应 VIP
 
 ## 9. 接口
 
-### 9.1 影策管理接口
+### 9.1 Canvas 管理接口
 
 全部挂在 `/api/admin/account-pool` 下，先 `RequireAdmin`，再检查插件可用（OAuth 回调和停用后的只读查询除外）。响应统一为 `{ code, data, msg, reason }`。
 
@@ -809,15 +809,15 @@ VIP 替代：CLI 说明中建议非 VIP 模型并发受限时可尝试对应 VIP
 
 ### 9.2 适配服务接口
 
-见第 5.3 节。适配服务只接受来自影策的请求，监听内部网络，不对公网暴露。
+见第 5.3 节。适配服务只接受来自 Canvas 的请求，监听内部网络，不对公网暴露。
 
 ## 10. 安全与合规
 
 | 风险 | 措施 |
 | --- | --- |
 | 凭据泄露 | 凭据只存在主库，`.settings-key` AES-256-GCM 加密；管理接口只返回 `hasCredential`、`expiresAt`；日志、错误、审计、任务正文不写凭据；适配服务不落盘凭据，临时目录用后即删 |
-| 适配服务被冒用 | Bearer 令牌至少 32 位，与影策 `.env` 一起管理；适配服务只监听内部网络 |
-| SSRF | 适配服务地址主机必须精确放行（`CANVAS_ALLOWED_PRIVATE_UPSTREAM_HOSTS`）或为公网 HTTPS；结果 `url` 走影策出站校验；禁止跨主机重定向携带凭据 |
+| 适配服务被冒用 | Bearer 令牌至少 32 位，与 Canvas `.env` 一起管理；适配服务只监听内部网络 |
+| SSRF | 适配服务地址主机必须精确放行（`CANVAS_ALLOWED_PRIVATE_UPSTREAM_HOSTS`）或为公网 HTTPS；结果 `url` 走 Canvas 出站校验；禁止跨主机重定向携带凭据 |
 | OAuth 劫持 | state 单次有效、绑定发起管理员、有效期 10 分钟；PKCE S256；回调接口要求管理员登录态；粘贴方式只解析参数 |
 | 授权错账号 | 身份确认步骤；同平台身份唯一；重新授权校验一致 |
 | 越权使用 | 管理接口仅管理员；创建任务时强校验用户分组与每用户在途上限 |
@@ -829,10 +829,10 @@ VIP 替代：CLI 说明中建议非 VIP 模型并发受限时可尝试对应 VIP
 
 ### 11.1 部署结构
 
-适配服务使用独立的 Compose 项目，接入影策项目的默认网络：
+适配服务使用独立的 Compose 项目，接入 Canvas 项目的默认网络：
 
 ```yaml
-# docker-compose.accountpool.yml（与影策安装目录分开存放）
+# docker-compose.accountpool.yml（与 Canvas 安装目录分开存放）
 name: yingce-accountpool
 services:
   accountpool-adapter:
@@ -859,21 +859,21 @@ volumes:
   accountpool-idempotency:
 ```
 
-- 网络名 `open-ai-canvas_default` 来自影策 Compose 项目名（安装目录名）加 `_default`，以实际 `docker network ls` 为准。
-- 影策 `.env` 的 `CANVAS_ALLOWED_PRIVATE_UPSTREAM_HOSTS` 追加 `accountpool-adapter`（逗号分隔、精确匹配；该变量已由 `docker-compose.deploy.yml` 传给 backend），再在后台「平台」页登记 `http://accountpool-adapter:8090` 与令牌。
-- 不改 `docker-compose.deploy.yml`，不新增影策必填环境变量，Host Updater 升级不受影响。适配服务的升级、回退由运维单独执行，不在后台「系统更新」范围内。
-- 适配服务镜像构建 linux/amd64 与 linux/arm64，与影策一致。
+- 网络名 `open-ai-canvas_default` 来自 Canvas Compose 项目名（安装目录名）加 `_default`，以实际 `docker network ls` 为准。
+- Canvas `.env` 的 `CANVAS_ALLOWED_PRIVATE_UPSTREAM_HOSTS` 追加 `accountpool-adapter`（逗号分隔、精确匹配；该变量已由 `docker-compose.deploy.yml` 传给 backend），再在后台「平台」页登记 `http://accountpool-adapter:8090` 与令牌。
+- 不改 `docker-compose.deploy.yml`，不新增 Canvas 必填环境变量，Host Updater 升级不受影响。适配服务的升级、回退由运维单独执行，不在后台「系统更新」范围内。
+- 适配服务镜像构建 linux/amd64 与 linux/arm64，与 Canvas 一致。
 
 ### 11.2 运维要点
 
-- 备份：账号凭据在影策主库，随现有备份走；恢复时必须同时有 `.settings-key`，否则所有账号需要重新登录。
+- 备份：账号凭据在 Canvas 主库，随现有备份走；恢复时必须同时有 `.settings-key`，否则所有账号需要重新登录。
 - 适配服务不可用时，新任务准入拒绝（`account_pool_adapter_unavailable`），在途任务按回查失败处理并继续等待，不会重新提交。
-- 平台协议变化：升级适配服务镜像即可；影策读取到新的平台描述后刷新模型目录，变化项提示管理员审核。
+- 平台协议变化：升级适配服务镜像即可；Canvas 读取到新的平台描述后刷新模型目录，变化项提示管理员审核。
 - 健康检查只证明适配服务在线，不代表账号可用；以账号测试和冒烟任务为准。
 
 ## 12. 代码落点
 
-**影策（公开仓库）**
+**Canvas（公开仓库）**
 
 | 层 | 文件 | 内容 |
 | --- | --- | --- |
@@ -895,7 +895,7 @@ volumes:
 ```text
 accountpool-adapter/
 ├── cmd/adapter/            入口、HTTP 路由、鉴权、请求 ID、超时
-├── internal/protocol/      标准请求/响应类型（与影策同版本）
+├── internal/protocol/      标准请求/响应类型（与 Canvas 同版本）
 ├── internal/idempotency/   24 小时幂等记录（SQLite）
 ├── internal/files/         结果文件暂存与 TTL 清理
 ├── platforms/libtv/        MCP 客户端、OAuth、能力映射、错误映射
@@ -907,7 +907,7 @@ accountpool-adapter/
 
 ## 13. 测试与验收
 
-**影策**
+**Canvas**
 
 - 适配客户端：错误分类解析、协议版本不兼容拒绝、凭据不进日志。
 - 登录：三种方式的完成、过期、取消（吊销暂存凭据）、重复账号拦截、重新授权身份不一致拦截、连续添加。
@@ -930,12 +930,12 @@ accountpool-adapter/
 
 ## 14. 分期与工作量
 
-按一名熟悉本仓库的全栈开发估算；影策框架与适配服务可两人并行。P0 结论可能调整后续估算。
+按一名熟悉本仓库的全栈开发估算；Canvas 框架与适配服务可两人并行。P0 结论可能调整后续估算。
 
 | 阶段 | 内容 | 产出 | 预估 |
 | --- | --- | --- | --- |
 | P0 验证 | 第 15 节全部问题；定稿标准 v1 字段；录制脱敏样本作为测试夹具 | 回填本文〔P0〕条目；协议文档 | 3–4 天 |
-| P1 影策框架 | 表与迁移；内置插件与菜单；适配客户端；适配登记与平台页；登录会话三种方式与添加账号弹窗；凭据续期与串行；账号与模型同步；托管渠道与模型导入；执行器（单账号、分离式回查、结果转存、恢复）；准入 | 用 mock 平台走通全链路 | 10–12 天 |
+| P1 Canvas 框架 | 表与迁移；内置插件与菜单；适配客户端；适配登记与平台页；登录会话三种方式与添加账号弹窗；凭据续期与串行；账号与模型同步；托管渠道与模型导入；执行器（单账号、分离式回查、结果转存、恢复）；准入 | 用 mock 平台走通全链路 | 10–12 天 |
 | P2 适配服务 | 服务骨架、鉴权、幂等、文件暂存；mock 平台；即梦适配；LibTV 适配；一致性测试；多架构镜像与 Compose | 两个真实平台可用 | 8–10 天（可与 P1 并行） |
 | P3 调度与运营 | 五种策略、学习并发、冷却策略、日消耗上限、每用户上限、`BlockRoute` 协作、对账、告警、模型覆盖页、调用记录、用量统计、文档 | 可长期运行 | 5–7 天 |
 
@@ -943,7 +943,7 @@ accountpool-adapter/
 
 **LibTV**（2 个不同档位账号）
 
-1. 动态注册是否接受 `https://<影策域名>/api/admin/account-pool/oauth/callback`；不接受则默认粘贴回调。
+1. 动态注册是否接受 `https://<Canvas 域名>/api/admin/account-pool/oauth/callback`；不接受则默认粘贴回调。
 2. 是否支持强制重新登录的参数；refresh token 有效期、是否轮换、长期不用是否失效。
 3. `account_user` 的档位、到期、积分字段与单位。
 4. `search_models`、`get_model` 在不同档位下的差异；schema 中是否含积分价格。
@@ -963,7 +963,7 @@ accountpool-adapter/
 8. 同一账号在两个不同 HOME 并行调用是否会互相使凭据失效（验证串行的必要性）。
 9. CLI 版本升级频率与兼容性；`version` 输出用于记录。
 
-**影策**
+**Canvas**
 
 1. `--remove-orphans` 不影响独立项目中的适配服务（在测试服务器跑一次在线更新）。
 2. backend 容器能通过外部网络解析 `accountpool-adapter`。
@@ -1000,6 +1000,6 @@ accountpool-adapter/
 - [ghuntley/underclass](https://github.com/ghuntley/underclass)：冷却到窗口重置、单飞刷新、受理前换号、快速失败。
 - [Wei-Shaw/sub2api](https://github.com/Wei-Shaw/sub2api) issue [#6530](https://github.com/Wei-Shaw/sub2api/issues/6530)、[#704](https://github.com/Wei-Shaw/sub2api/issues/704)：池内拒绝与上游错误区分、账号周期消费上限。
 - [modelcontextprotocol/go-sdk](https://github.com/modelcontextprotocol/go-sdk)：官方 Go SDK v1.8，Streamable HTTP 客户端、协议协商、许可证。
-- 影策代码：`backend/internal/app/{provider.go,provider_protocol_async.go,task_worker.go,task_creation.go,channel_models_catalog.go,model_router.go,protocol_plugins.go,plugin_management.go,sms_plugins.go,workflow_plugins.go,cloud_agent_pi_runtime.go}`、`backend/internal/hostupdate/manager_ops.go`、`backend/internal/database/migrations.go`、`backend/internal/kernel/error_codes.go`、`docker-compose.deploy.yml`、`yingce-agent/README.md`、`web/src/components/payment-checkout-code.tsx`。
+- Canvas 代码：`backend/internal/app/{provider.go,provider_protocol_async.go,task_worker.go,task_creation.go,channel_models_catalog.go,model_router.go,protocol_plugins.go,plugin_management.go,sms_plugins.go,workflow_plugins.go,cloud_agent_pi_runtime.go}`、`backend/internal/hostupdate/manager_ops.go`、`backend/internal/database/migrations.go`、`backend/internal/kernel/error_codes.go`、`docker-compose.deploy.yml`、`yingce-agent/README.md`、`web/src/components/payment-checkout-code.tsx`。
 
 外部资料内容已改写以符合许可要求。

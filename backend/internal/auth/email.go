@@ -709,7 +709,7 @@ func randomNumericCode(length int) (string, error) {
 }
 
 func registrationEmail(brandName, recipient, code string) (OutgoingMail, error) {
-	return codeMail(emailtpl.CodeEmail{Brand: brandName, Heading: "注册", Intro: "你正在注册" + brandName + "。请在注册页面输入下方验证码，完成邮箱验证。", Code: code, TTLMinutes: 10, Recipient: recipient})
+	return codeMail(emailtpl.CodeEmail{Brand: brandName, Heading: "注册", Intro: kernel.BrandPrefix("你正在注册", brandName) + "。请在注册页面输入下方验证码，完成邮箱验证。", Code: code, TTLMinutes: 10, Recipient: recipient})
 }
 
 func codeMail(item emailtpl.CodeEmail) (OutgoingMail, error) {

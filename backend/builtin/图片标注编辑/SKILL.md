@@ -3,8 +3,8 @@ name: "图片标注编辑"
 description: "通过编号标注图片中的多个位置，再按标注生成编辑结果。"
 metadata:
   version: "1.0.0"
-  author: "影策"
-  owner: "yingce-system"
+  author: "Canvas"
+  owner: "canvas-system"
   skillId: "yingce-image-annotation"
   tag: creative
   sortWeight: 890

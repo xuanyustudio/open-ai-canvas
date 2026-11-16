@@ -20,7 +20,7 @@ export const useNotificationPreferencesStore = create<NotificationPreferencesSto
             setGenerationSound: (generationSound) => set({ generationSound }),
         }),
         {
-            name: "yingce:notification_preferences",
+            name: "canvas:notification_preferences",
             partialize: (state) => ({ generationNotice: state.generationNotice, generationSound: state.generationSound }),
             merge: (persisted, current) => {
                 const stored = (persisted || {}) as Partial<NotificationPreferencesStore>;

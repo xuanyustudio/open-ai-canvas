@@ -111,7 +111,7 @@ Agent 通过 `mcp_list_tools` 分三步读取连接目录、指定连接的工�
 | `GET /api/pose-library/items/:id/thumb`、`/image` | 读取本站数据目录里的缩略图 / 原图，`Cache-Control: private, max-age=604800`；地址带 `?v=<version>`，重新同步后地址随之变化 |
 | `POST /api/pose-library/use` | `{ ids: string[] }`，1–16 个条目 ID。把原图复制成当前用户的资源（走普通上传的 MIME 探测、每日上传额度与容量），返回 `data={items:[{itemId,name,angle,category,resource}]}`，顺序与请求一致；同一用户对同一张图重复选用复用已有资源（幂等键为条目 ID + 原图 SHA-256）。限流沿用 `resourceImportPerMinute` |
 | `GET /api/admin/pose-library/items` | `keyword`、`source`、`system`、`status`（`pending/ready/failed`）、`page`、`pageSize`（默认 50，最大 100）；返回条目、`stats{total,ready,pending,failed,disabled}`、来源列表和按体系汇总 |
-| `POST /api/admin/pose-library/import` | multipart：`file`（JSON，最大 16 MiB）、`baseUrl`（图片来源根地址）、`systems`（JSON 字符串数组，必填，只导入列出的体系）。接受 ai-pose-gallery-zh 的 `data/pose-zh.json` 或 `format=yingce-pose-library` 通用包；按 `来源 + 外部 ID` 新增或更新，新条目为 `pending`。`baseUrl` 经出站 SSRF 校验，私网、本机地址返回 400 |
+| `POST /api/admin/pose-library/import` | multipart：`file`（JSON，最大 16 MiB）、`baseUrl`（图片来源根地址）、`systems`（JSON 字符串数组，必填，只导入列出的体系）。接受 ai-pose-gallery-zh 的 `data/pose-zh.json` 或 `format=canvas-pose-library` 通用包；按 `来源 + 外部 ID` 新增或更新，新条目为 `pending`。`baseUrl` 经出站 SSRF 校验，私网、本机地址返回 400 |
 | `POST /api/admin/pose-library/sync` | `{ limit?, retryFailed? }`，每批默认 12、最多 40 条，单批约 40 秒预算。服务端经出站客户端下载原图与缩略图（缺缩略图时由原图生成），只接受 JPEG/PNG/WebP、单张 20 MiB、8192×8192 以内；返回本批 `processed/succeeded/failed/failures` 与最新 `stats`。`retryFailed=true` 先把失败条目放回待同步，管理页只在第一批传入 |
 | `POST /api/admin/pose-library/items` | multipart：`file`（图片，最大 20 MiB）、`name`、`system`、`category`、`angle`、`code`。新增来源为 `custom` 的自建姿势，编号相同的图合并为同一姿势的不同视角 |
 | `PATCH /api/admin/pose-library/items/:id` | 可选 `name`、`system`、`category`、`angle`、`code`、`enabled` |
@@ -418,9 +418,9 @@ CANVAS_BACKEND_DATA_DIR=/明确的数据目录 ./migrate-schema repair-canvas-re
 
 ## OIDC 登录
 
-在身份提供方创建机密客户端，开启授权码流程和 PKCE S256，在提供方登记 `https://<影策域名>/api/auth/oidc/callback`。将签发方、客户端 ID、客户端密钥和完整回调分别设为后端环境变量 `CANVAS_OIDC_ISSUER`、`CANVAS_OIDC_CLIENT_ID`、`CANVAS_OIDC_CLIENT_SECRET`、`CANVAS_OIDC_REDIRECT_URL`。官方生产 Compose 从部署环境传入这些变量。回调和登录入口使用同一 HTTPS 域名。配置生效后，`GET /auth/settings` 的 `oidcEnabled` 为 true，登录表单显示 OIDC 入口。
+在身份提供方创建机密客户端，开启授权码流程和 PKCE S256，在提供方登记 `https://<Canvas 域名>/api/auth/oidc/callback`。将签发方、客户端 ID、客户端密钥和完整回调分别设为后端环境变量 `CANVAS_OIDC_ISSUER`、`CANVAS_OIDC_CLIENT_ID`、`CANVAS_OIDC_CLIENT_SECRET`、`CANVAS_OIDC_REDIRECT_URL`。官方生产 Compose 从部署环境传入这些变量。回调和登录入口使用同一 HTTPS 域名。配置生效后，`GET /auth/settings` 的 `oidcEnabled` 为 true，登录表单显示 OIDC 入口。
 
-默认按公开注册开关决定是否允许首次开户。仅员工可访问时，关闭公开注册，再将 `CANVAS_OIDC_ALLOWED_GROUP` 设为专用组的完整名称或 ID，并让提供方在签名 ID Token 的 `groups` 数组中返回该值。每次 OIDC 登录都校验组成员身份，缺少匹配组时拒绝登录。首次开户要求同意协议，创建普通用户。启用了短信和邮箱双重注册验证时，仍拒绝 OAuth 首次开户。账号按签发方和 `sub` 识别，不按邮箱合并。撤销组权限会拒绝后续 OIDC 登录。需要终止已有会话时，请同时停用影策账号。
+默认按公开注册开关决定是否允许首次开户。仅员工可访问时，关闭公开注册，再将 `CANVAS_OIDC_ALLOWED_GROUP` 设为专用组的完整名称或 ID，并让提供方在签名 ID Token 的 `groups` 数组中返回该值。每次 OIDC 登录都校验组成员身份，缺少匹配组时拒绝登录。首次开户要求同意协议，创建普通用户。启用了短信和邮箱双重注册验证时，仍拒绝 OAuth 首次开户。账号按签发方和 `sub` 识别，不按邮箱合并。撤销组权限会拒绝后续 OIDC 登录。需要终止已有会话时，请同时停用 Canvas 账号。
 
 `GET /auth/oidc/start` 接收站内 `next` 和 `acceptedTerms=true`，将协议状态保存在一次性 OAuth state。回调匹配发起浏览器的安全 Cookie，并校验签名、签发方、受众、有效期和 nonce。发现、令牌、公钥请求沿用后端出站地址限制，要求 HTTPS，不跟随重定向，单次响应上限 1 MiB。发起和回调按 IP 限流，不把令牌写入会话 Cookie 或登录日志。
 
@@ -1094,7 +1094,7 @@ install 的 Base URL、协议、能力和成本全部从服务端快照读取，
 | `POST /dramas/:id/chapters/produce` | `{ chapterIds, chaptersPerEpisode? }` 把预留章节加入制作：按章节顺序每 1–12 章建成一集（不传沿用作品的按章分集设置，没有则每章一集；不相邻的章节不合并），集号接在现有分集之后，规划游标推到已加入制作的章节数，返回 `{ episodeIds }`。章节已在制作中、单章超过 1.2 万字、合并后单集超过 4 万字或仍有章节在分集规划时返回 400。已完成的作品回到制作中，暂停中的保持暂停；新章节里出现的角色、道具与场景在写剧本时即时建档 |
 | `GET /dramas/:id/chapters/:chapterId` · `PATCH …` | 读取单章原文 / 修改原文 `{ title?, text? }`（不能超过 1.2 万字与原字数中的较大值）；已写好的剧本不自动重写，需再调用 `rescript` |
 | `POST /dramas/:id/episodes/:episodeId/jianying-draft` | 导出剪映专业版草稿，表单字段 `draftRoot`（用户本机剪映草稿目录的绝对路径，macOS 或 Windows 格式，≤ 400 字）与 `captions=1`（附带台词字幕轨）。校验通过后流式返回 ZIP（`application/zip`，`zip.Store`），校验失败返回标准业务信封。包内唯一顶层目录即草稿文件夹，含 `draft_content.json` 与内容相同的 `draft_info.json`、`draft_meta_info.json`、`materials/` 下按段顺序排列的段视频、首段尾帧转成的 `draft_cover.jpg`、`台词字幕.srt` 与 `导入说明.txt`。素材按 `draftRoot/草稿名/materials/…` 写成绝对路径，解压到该目录后剪映可直接打开；主轨按段视频实际时长首尾相接，字幕按镜头时长占比估算。只导出 ready 或 stale 且有视频资源的段，其余写进导入说明；一个都没有时返回 400。 |
-| `POST /dramas/:id/asset-package` | 打包资产：表单字段 `episodeId`（可重复，最多 500，只能是已拆出分镜的集）、`media=1`（设定参考图、角色声音样本、段视频与成片）、`prompts=1`（`设定/设定提示词.md` 与每集 `提示词.md`，并写入清单的提示词字段），两者至少一项。全剧设定总会打包。根目录 `资产清单.json` 的 `format` 为 `yingce.drama-asset-package`、`version` 为 1，记录作品名与画幅、设定（类型、名称、别名、外观、简介、造型名、文件路径、参考图提示词）、所选各集的剧情段（段号、标题、秒数、视频路径、生效提示词）与镜头。合计超过 8 GB 返回 400。导入在浏览器完成：读取清单与图片后调用现有的设定参考图、设定、镜头与剧情段接口写入当前作品，不新增导入接口。 |
+| `POST /dramas/:id/asset-package` | 打包资产：表单字段 `episodeId`（可重复，最多 500，只能是已拆出分镜的集）、`media=1`（设定参考图、角色声音样本、段视频与成片）、`prompts=1`（`设定/设定提示词.md` 与每集 `提示词.md`，并写入清单的提示词字段），两者至少一项。全剧设定总会打包。根目录 `资产清单.json` 的 `format` 为 `canvas.drama-asset-package`、`version` 为 1，记录作品名与画幅、设定（类型、名称、别名、外观、简介、造型名、文件路径、参考图提示词）、所选各集的剧情段（段号、标题、秒数、视频路径、生效提示词）与镜头。合计超过 8 GB 返回 400。导入在浏览器完成：读取清单与图片后调用现有的设定参考图、设定、镜头与剧情段接口写入当前作品，不新增导入接口。 |
 
 两个导出接口只读取已有资源，账号超出存储容量进入只读时仍可调用；`draftRoot` 走表单 POST，不进入访问日志的 URL。
 | `DELETE /dramas/:id` | 删除作品与全部制作记录 |

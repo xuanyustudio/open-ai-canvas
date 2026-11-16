@@ -4,6 +4,8 @@ import (
 	"html/template"
 	"strconv"
 	"strings"
+
+	"yingce/backend/internal/kernel"
 )
 
 // CodeEmail 是一次性验证码邮件。Code 只出现在正文与标题里，调用方不得写入日志。
@@ -13,7 +15,7 @@ type CodeEmail struct {
 	Heading string
 	// SubjectLabel 是标题里的验证码名称，如“密码重置验证码”；留空时为 Heading + “验证码”。
 	SubjectLabel string
-	// Intro 说明用途，如“你正在重置 影策 账号密码，请在页面中输入以下验证码。”
+	// Intro 说明用途，如“你正在重置 Canvas 账号密码，请在页面中输入以下验证码。”
 	Intro       string
 	Code        string
 	TTLMinutes  int
@@ -83,7 +85,7 @@ func RenderCode(mail CodeEmail) (Rendered, error) {
 	if label == "" {
 		label = mail.Heading + "验证码"
 	}
-	return Rendered{Subject: mail.Code + " 是你的" + mail.Brand + label, Text: text, HTML: html}, nil
+	return Rendered{Subject: mail.Code + " " + kernel.BrandJoin(kernel.BrandPrefix("是你的", mail.Brand), label), Text: text, HTML: html}, nil
 }
 
 // NoticeEmail 是不含验证码的账号通知，如邮箱变更提醒、测试邮件。

@@ -53,7 +53,7 @@ function useLocalDayKey(): string {
 
 /** 导出文件名带上日期，重复导出不会互相覆盖。 */
 function exportFileName() {
-    return `yingce-inspirations-${new Date().toISOString().slice(0, 10)}.json`;
+    return `canvas-inspirations-${new Date().toISOString().slice(0, 10)}.json`;
 }
 
 function downloadText(text: string, fileName: string) {

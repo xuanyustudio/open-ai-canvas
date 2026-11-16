@@ -11,7 +11,7 @@ import { type LucideIcon, FileText, Image as ImageIcon, Clapperboard, AudioLines
 
 export type LibraryAsset = Asset;
 
-export const ASSET_GRID_DENSITY_KEY = "yingce:asset-grid-density";
+export const ASSET_GRID_DENSITY_KEY = "canvas:asset-grid-density";
 
 export const assetKindIcons: Record<LibraryAsset["kind"], LucideIcon> = {
     text: FileText,

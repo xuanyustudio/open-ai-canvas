@@ -17,8 +17,8 @@ type ResourceCacheMeta = {
 export type ResourceObjectUrlLease = { url: string; release: () => void };
 type LeasedUrl = { url: string; references: number };
 
-const blobStore = localforage.createInstance({ name: "yingce", storeName: "resource_blobs" });
-const metaStore = localforage.createInstance({ name: "yingce", storeName: "resource_blob_meta" });
+const blobStore = localforage.createInstance({ name: "canvas", storeName: "resource_blobs" });
+const metaStore = localforage.createInstance({ name: "canvas", storeName: "resource_blob_meta" });
 const leasedUrls = new Map<string, LeasedUrl>();
 const sessionBlobs = new Map<string, Blob>();
 let sessionBytes = 0;
