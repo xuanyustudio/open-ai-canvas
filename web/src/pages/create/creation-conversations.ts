@@ -214,3 +214,147 @@ export function conversationTimestamp(value: string) {
     const timestamp = new Date(value).getTime();
     return Number.isFinite(timestamp) ? timestamp : 0;
 }
+
+function creationModeFromTaskType(type: string): CreationMode {
+    if (type.includes("image")) return "image";
+    if (type.includes("text")) return "text";
+    return "video";
+}
+
+function supersededCreationTaskIds(tasks: readonly Pick<GenerationTask, "id" | "retryOf">[]) {
+    const byId = new Map(tasks.map((task) => [task.id, task]));
+    const superseded = new Set<string>();
+    for (const task of tasks) {
+        let cursor = task.retryOf?.trim();
+        const seen = new Set<string>();
+        while (cursor && !seen.has(cursor)) {
+            superseded.add(cursor);
+            seen.add(cursor);
+            cursor = byId.get(cursor)?.retryOf?.trim();
+        }
+    }
+    return superseded;
+}
+
+function promptForReattachedMessage(conversation: CreationConversation | undefined, prompt: string) {
+    const listed = prompt.trim();
+    if (!listed || !conversation) return listed;
+    // 列表接口会截断提示词；只有本地已有更长、且以列表文本为前缀的用户消息时才沿用全文。
+    const match = conversation.messages.find((message) => message.role === "user" && typeof message.content === "string" && message.content.startsWith(listed) && message.content.length >= listed.length);
+    return match && typeof match.content === "string" && match.content.trim() ? match.content : listed;
+}
+
+function messagesForReattachedTask(conversation: CreationConversation | undefined, tasks: GenerationTask[]): CreationMessage[] {
+    const first = tasks[0];
+    const context = first.clientContext;
+    if (!context?.messageId) return [];
+    const createdAt = first.createdAt;
+    const mode = creationModeFromTaskType(first.type);
+    const prompt = promptForReattachedMessage(conversation, first.prompt || "");
+    const user: CreationMessage = {
+        id: `${context.messageId}:user`,
+        role: "user",
+        mode,
+        content: prompt,
+        createdAt,
+        model: first.model,
+    };
+    const assistant: CreationMessage = {
+        id: context.messageId,
+        role: "assistant",
+        mode,
+        content: "",
+        createdAt,
+        status: "pending",
+        taskIds: tasks.map((task) => task.id),
+        model: first.model,
+        generationStatus: first.status,
+        generationStage: first.stage,
+        generationMediaStage: first.mediaStage,
+        generationProgress: typeof first.progress === "number" && Number.isFinite(first.progress) ? Math.round(first.progress) : undefined,
+    };
+    return [user, assistant];
+}
+
+function insertConversationMessages(conversation: CreationConversation, messages: CreationMessage[]) {
+    const next = [...conversation.messages];
+    for (let index = 0; index < messages.length; index += 2) {
+        const pair = messages.slice(index, index + 2);
+        const createdAt = conversationTimestamp(pair[0]?.createdAt || pair[1]?.createdAt || "");
+        let insertAt = next.length;
+        for (let cursor = 0; cursor < next.length; cursor++) {
+            if (conversationTimestamp(next[cursor].createdAt) > createdAt) {
+                insertAt = cursor;
+                break;
+            }
+        }
+        next.splice(insertAt, 0, ...pair);
+    }
+    const latest = messages.reduce((stamp, message) => (conversationTimestamp(message.createdAt) > conversationTimestamp(stamp) ? message.createdAt : stamp), conversation.updatedAt);
+    return { ...conversation, messages: next, updatedAt: latest };
+}
+
+/**
+ * 创作页对话只存在浏览器本地。任务若已提交到服务端，但对应镜头消息从本地记录里丢失，
+ * 按任务上的 conversationId / messageId 把用户消息和助手消息补回时间线。
+ * 不创建、不重试计费任务；被后续重试取代的失败尝试不再单独补成镜头。
+ */
+export function reattachMissingCreationTaskMessages(conversations: CreationConversation[], tasks: GenerationTask[]): CreationConversation[] {
+    const attachable = tasks.filter((task) => Boolean(task.clientContext?.conversationId?.trim() && task.clientContext?.messageId?.trim()));
+    if (!attachable.length) return conversations;
+
+    const superseded = supersededCreationTaskIds(attachable);
+    const existingMessageIds = new Set<string>();
+    const existingTaskIds = new Set<string>();
+    for (const conversation of conversations) {
+        for (const message of conversation.messages) {
+            existingMessageIds.add(message.id);
+            for (const taskId of message.taskIds || []) existingTaskIds.add(taskId);
+        }
+    }
+
+    const groups = new Map<string, GenerationTask[]>();
+    for (const task of attachable) {
+        if (superseded.has(task.id)) continue;
+        const conversationId = task.clientContext!.conversationId!.trim();
+        const messageId = task.clientContext!.messageId!.trim();
+        if (existingMessageIds.has(messageId) || existingTaskIds.has(task.id)) continue;
+        const key = `${conversationId}\u001f${messageId}`;
+        const group = groups.get(key) || [];
+        group.push(task);
+        groups.set(key, group);
+    }
+    if (!groups.size) return conversations;
+
+    const next = conversations.map((conversation) => ({ ...conversation, messages: [...conversation.messages] }));
+    const byId = new Map(next.map((conversation) => [conversation.id, conversation]));
+    const grouped = Array.from(groups.entries()).sort((left, right) => {
+        const leftTask = left[1][0];
+        const rightTask = right[1][0];
+        return conversationTimestamp(leftTask.createdAt) - conversationTimestamp(rightTask.createdAt) || leftTask.id.localeCompare(rightTask.id);
+    });
+
+    for (const [, group] of grouped) {
+        const conversationId = group[0].clientContext!.conversationId!.trim();
+        const sorted = [...group].sort((left, right) => (left.clientContext?.batchIndex || 0) - (right.clientContext?.batchIndex || 0) || conversationTimestamp(left.createdAt) - conversationTimestamp(right.createdAt));
+        const existing = byId.get(conversationId);
+        const messages = messagesForReattachedTask(existing, sorted);
+        if (!messages.length) continue;
+        if (existing) {
+            const updated = insertConversationMessages(existing, messages);
+            const index = next.findIndex((conversation) => conversation.id === conversationId);
+            next[index] = updated;
+            byId.set(conversationId, updated);
+            continue;
+        }
+        const created = {
+            id: conversationId,
+            title: (messages[0]?.content || "").trim().slice(0, 24) || conversationId,
+            messages,
+            updatedAt: messages[messages.length - 1]?.createdAt || sorted[0].updatedAt || sorted[0].createdAt,
+        } satisfies CreationConversation;
+        next.unshift(created);
+        byId.set(conversationId, created);
+    }
+    return next;
+}

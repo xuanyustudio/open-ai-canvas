@@ -22,7 +22,7 @@ import { preserveImageSettings as normalizeImageValue, mediaSettingIssues } from
 import { inferVideoOperation, modelGroupReferenceLimits, resolveCompatibleModel, mergedImageCapabilityConfig, type ModelRequirements } from "@/lib/model-selection";
 import type { BackendGenerationResult } from "@/services/api/generation-task";
 import type { Skill } from "@/services/api/skills";
-import type { GenerationTask } from "@/services/api/task-center";
+import { listGenerationTasks, type GenerationTask } from "@/services/api/task-center";
 import { loadCreationConversations, pendingCreationTaskIds, removeCreationConversationSnapshot, saveCreationConversations, updateCreationConversationSnapshot } from "@/services/creation-conversation-store";
 import { clearCreationConversationSnapshot, mergeCreationConversationSnapshot, readCreationConversationSnapshot, writeCreationConversationSnapshot } from "@/services/creation-conversation-snapshot";
 import { resolveModelChannel, resolveModelRequestConfig, selectableModelsByCapability, useConfigStore, useEffectiveConfig } from "@/stores/use-config-store";
@@ -77,6 +77,7 @@ import {
     materializeCreationTaskResults,
     newConversation,
     newMessage,
+    reattachMissingCreationTaskMessages,
     reconcileCreationTaskMessages,
     type PersistedCreationTask,
 } from "./creation-conversations";
@@ -535,6 +536,36 @@ export default function CreatePage() {
         },
         [updateConversationMessage],
     );
+
+    useEffect(() => {
+        if (!userSessionHydrated || !hydrated || !conversationStorageReady || conversationScope !== getActiveUserScope()) return;
+        let cancelled = false;
+        const controller = new AbortController();
+        const scope = conversationScope;
+        void (async () => {
+            try {
+                const [runtime, tasks] = await Promise.all([loadCreationRuntime(), listGenerationTasks(100, undefined, undefined, controller.signal)]);
+                if (cancelled || controller.signal.aborted || scope !== getActiveUserScope()) return;
+                const reattached = reattachMissingCreationTaskMessages(conversationsRef.current, tasks);
+                if (reattached !== conversationsRef.current) {
+                    conversationsRef.current = reattached;
+                    setConversations(reattached);
+                }
+                const createPageTasks = tasks.filter((task) => Boolean(task.clientContext?.conversationId && task.clientContext.messageId));
+                if (!createPageTasks.length) return;
+                const persistedTasks = await applyCreationTaskSnapshots(runtime, createPageTasks, controller.signal);
+                if (cancelled || controller.signal.aborted || scope !== getActiveUserScope()) return;
+                setConversations((current) => reconcileCreationTaskMessages(runtime, current, persistedTasks));
+            } catch (error) {
+                if (cancelled || controller.signal.aborted) return;
+                console.warn("创作任务镜头补回失败，将继续使用本地对话记录", error);
+            }
+        })();
+        return () => {
+            cancelled = true;
+            controller.abort();
+        };
+    }, [applyCreationTaskSnapshots, conversationScope, conversationStorageReady, hydrated, userSessionHydrated]);
 
     useEffect(() => {
         if (!hydrated || !recoveryTaskKey || !pendingTaskIds.length) return;
