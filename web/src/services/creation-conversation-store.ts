@@ -81,7 +81,23 @@ function persistableCreationConversations<T extends StoredCreationConversation>(
     })) as T[];
 }
 
+// 串行写入最新快照：在途的旧保存完成后，若已有更新的待写数据就改写最新一份，避免后完成的旧快照盖掉新镜头。
+let creationConversationSaveQueue: Promise<void> = Promise.resolve();
+let pendingCreationConversationSave: StoredCreationConversation[] | null = null;
+let pendingCreationConversationSaveScope: ReturnType<typeof getActiveUserScope> | undefined;
+
 export async function saveCreationConversations<T extends StoredCreationConversation>(conversations: T[]) {
-    const storage = localForageStorageForScope(getActiveUserScope());
-    await storage.setItem(CREATION_CONVERSATIONS_KEY, JSON.stringify(persistableCreationConversations(conversations)));
+    pendingCreationConversationSave = persistableCreationConversations(conversations);
+    pendingCreationConversationSaveScope = getActiveUserScope();
+    const run = creationConversationSaveQueue.then(async () => {
+        while (pendingCreationConversationSave) {
+            const payload = pendingCreationConversationSave;
+            const scope = pendingCreationConversationSaveScope;
+            pendingCreationConversationSave = null;
+            const storage = localForageStorageForScope(scope);
+            await storage.setItem(CREATION_CONVERSATIONS_KEY, JSON.stringify(payload));
+        }
+    });
+    creationConversationSaveQueue = run.catch(() => undefined);
+    await run;
 }
