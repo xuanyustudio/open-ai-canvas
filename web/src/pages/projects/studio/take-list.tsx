@@ -99,7 +99,13 @@ export function DramaTakeList({ projectId, ownerId, kind, limit = 6, previewTake
                     return (
                         <li key={take.id} className={className}>
                             {previewable ? (
-                                <button type="button" className="drama-take-preview" onClick={() => onPreview?.(take)} aria-pressed={previewTakeId === take.id} aria-label={take.current ? `预览当前版本 V${take.version}` : `预览 V${take.version}，不切换当前版本`}>
+                                <button
+                                    type="button"
+                                    className="drama-take-preview"
+                                    onClick={() => onPreview?.(take)}
+                                    aria-pressed={previewTakeId === take.id}
+                                    aria-label={take.current ? `预览当前版本 V${take.version}` : `预览 V${take.version}，不切换当前版本`}
+                                >
                                     {body}
                                 </button>
                             ) : (

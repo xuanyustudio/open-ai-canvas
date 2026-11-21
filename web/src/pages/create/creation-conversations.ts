@@ -4,7 +4,7 @@ import { generationErrorMessage } from "@/lib/generation-error";
 import type { BackendGenerationResult } from "@/services/api/generation-task";
 import type { GenerationTask } from "@/services/api/task-center";
 import { creationAttachmentKind, type CreationAttachment } from "./creation-assets";
-import type { CreationConversation, CreationMessage, CreationShotRailEntry } from "./creation-types";
+import type { CreationConversation, CreationMessage, CreationMode, CreationShotRailEntry } from "./creation-types";
 
 type CreationRuntime = typeof import("./creation-runtime");
 export type PersistedCreationTask = GenerationTask & { creationResultUrls?: string[]; creationResultStorageKeys?: string[]; creationError?: string };
