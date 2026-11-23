@@ -647,6 +647,47 @@ add({
   response: asyncResponse("video", { videos: coalesce(ref("response.url"), ref("response.video_url"), ref("response.output.url")), errorPaths: ["error.code"], messagePaths: ["error.message"] })
 });
 
+const ohmybbOpenAIVideoMedia = omit({ $concatArrays: [
+  map(sorted(ref("request.images")), "media", {
+    type: "image_url",
+    image_url: { url: ref("media.value") },
+    role: coalesce(ref("media.role"), "reference_image")
+  }),
+  map(sorted(ref("request.videos")), "media", {
+    type: "video_url",
+    video_url: { url: ref("media.value") },
+    role: coalesce(ref("media.role"), "reference_video")
+  }),
+  map(sorted(ref("request.audios")), "media", {
+    type: "audio_url",
+    audio_url: { url: ref("media.value") },
+    role: coalesce(ref("media.role"), "reference_voice")
+  })
+] });
+add({
+  id: "openai-videos-ohmybb-compat", providerId: "openai-videos-ohmybb", name: "OhMyBB OpenAI Videos 兼容", vendor: "OhMyBB", capability: "video", version: "1.0.0",
+  videoReferences: { ...numberedImages("metadata-content"), maxImagesByOperation: { text_to_video: 0, image_to_video: null, reference_to_video: null } },
+  notes: "给 New API / OhMyBB 的 OpenAI Videos 兼容口（POST /v1/videos）使用。画幅和分辨率写入 metadata.ratio / metadata.resolution，不要把 16:9 这类比例放到顶层 size；官方 OpenAI Videos 的 size 只接受 720x1280 这类宽x高，否则中转站会返回 plugin_usage_invalid。参考图/音/视频放在 metadata.content。官方 Sora 请继续使用 openai-videos。",
+  baseUrl: "https://workbench.ohmybb.xyz/api/openai", auth: bearer, params: videoParams, requiresPublicMediaUrls: true,
+  create: jsonCreate("/v1/videos", {
+    model: ref("request.model"),
+    prompt: ref("request.prompt"),
+    seconds: { $toString: ref("request.duration") },
+    metadata: omit({
+      ratio: omit(ref("request.aspectRatio")),
+      resolution: omit(ref("request.resolution")),
+      duration: omit(conditional(gt(ref("request.duration"), 0), { $toInt: ref("request.duration") })),
+      generate_audio: omit(ref("request.generateAudio")),
+      watermark: omit(ref("request.watermark")),
+      content: ohmybbOpenAIVideoMedia
+    })
+  }),
+  poll: { method: "GET", path: "/v1/videos/{{taskId}}" },
+  cancel: { method: "DELETE", path: "/v1/videos/{{taskId}}" },
+  result: { method: "GET", path: "/v1/videos/{{taskId}}/content", headers: { Accept: "video/mp4" } },
+  response: asyncResponse("video", { videos: coalesce(ref("response.url"), ref("response.video_url"), ref("response.output.url")), errorPaths: ["error.code"], messagePaths: ["error.message"] })
+});
+
 // NewAPI 任务查询的失败原因在 data.fail_reason（外层 message 为空），兼容直接返回的扁平结构。
 const newAPITaskMessage = coalesce(
   ref("response.error.message"), ref("response.message"), ref("response.fail_reason"),

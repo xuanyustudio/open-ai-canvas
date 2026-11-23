@@ -36,6 +36,7 @@ type videoReferenceReader func(map[string]any, []RequestFilePart) (videoWireProm
 
 var videoReferenceReaders = map[string]videoReferenceReader{
 	"content":                     contentReferences,
+	"metadata-content":            metadataContentReferences,
 	"input-media":                 inputMediaReferences("reference_image", false),
 	"input-image-media":           inputMediaReferences("image_url", false),
 	"input-media-top-prompt":      inputMediaReferences("reference_image", true),
@@ -195,6 +196,22 @@ func arrayReferences(parent, field, role string, rejectFrames bool) videoReferen
 		}
 		return wire, nil
 	}
+}
+
+func metadataContentReferences(body map[string]any, _ []RequestFilePart) (videoWirePrompt, error) {
+	wire := videoWirePrompt{body: body, key: "prompt"}
+	metadata, _ := body["metadata"].(map[string]any)
+	items, _ := metadata["content"].([]any)
+	for _, raw := range items {
+		item, _ := raw.(map[string]any)
+		if item["type"] != "image_url" || item["role"] != "reference_image" {
+			continue
+		}
+		image, _ := item["image_url"].(map[string]any)
+		value, _ := image["url"].(string)
+		wire.slots = append(wire.slots, videoImageSlot{value: value, role: "reference_image"})
+	}
+	return wire, nil
 }
 
 func contentReferences(body map[string]any, _ []RequestFilePart) (videoWirePrompt, error) {
