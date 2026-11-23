@@ -512,16 +512,7 @@ func parseChatResponse(payload map[string]any) (CreateResult, error) {
 func parseResponsesResponse(payload map[string]any) (CreateResult, error) {
 	text := firstString(payload, "output_text", "text")
 	if text == "" {
-		if output, ok := payload["output"].([]any); ok {
-			for _, item := range output {
-				if m, ok := item.(map[string]any); ok {
-					text = firstString(m, "text", "content")
-					if text != "" {
-						break
-					}
-				}
-			}
-		}
+		text = responsesOutputMessageText(payload)
 	}
 	return CreateResult{Status: StatusSucceeded, Result: &Result{Text: text, Usage: object(payload["usage"])}}, nil
 }

@@ -137,6 +137,9 @@ func (a manifestAdapter) ParseAgent(_ context.Context, body []byte) (AgentResult
 	}
 	response := a.manifest.AgentResponse
 	result := AgentResult{Text: firstPathValue(payload, response.TextPaths...), Reasoning: firstPathValue(payload, response.ReasoningPaths...)}
+	if strings.TrimSpace(result.Text) == "" {
+		result.Text = responsesOutputMessageText(payload)
+	}
 	if response.ToolCallsPath == "" {
 		return result, nil
 	}
@@ -410,6 +413,9 @@ func (a manifestAdapter) parse(payload map[string]any, c PollContext) CreateResu
 	}
 	if result.Text == "" {
 		result.Text = firstPathValue(payload, response.TextPaths...)
+	}
+	if result.Text == "" {
+		result.Text = responsesOutputMessageText(payload)
 	}
 	if result.Reasoning == "" {
 		result.Reasoning = firstPathValue(payload, response.ReasoningPaths...)

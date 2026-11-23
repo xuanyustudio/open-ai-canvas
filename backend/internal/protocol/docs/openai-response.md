@@ -59,7 +59,7 @@ curl "{channel_base_url}/v1/responses" \
 
 ## 响应解析与限制
 
-解析器优先读取顶层 `output_text`；缺失时遍历 `output`，尝试读取 item 的 `text` 或 `content`，并保留 `usage`。当前实现没有完整执行 function call、computer use、file search 等输出 item，也不通过 `previous_response_id` 自动续接状态。需要这些能力时必须在 Agent 调用链中显式实现，不能只靠文档声称支持。
+解析器优先读取顶层 `output_text`；缺失时遍历 `output[]` 中 `type=message` 的 `content[]`，读取类型为 `output_text` 或 `text` 的 `text` 字段，并保留 `usage`。当前实现没有完整执行 function call、computer use、file search 等输出 item，也不通过 `previous_response_id` 自动续接状态。需要这些能力时必须在 Agent 调用链中显式实现，不能只靠文档声称支持。
 
 流式响应由文本事件链路处理。上游拒绝、模型不支持、输入结构错误、输出 token 超限和工具参数校验失败均应作为失败返回。
 
